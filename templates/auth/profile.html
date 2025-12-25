@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - TaskFlow{% endblock %}
+{% block header %}My Profile{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Profile Card -->
+    <div class="bg-white dark:bg-slate-800/50 rounded-xl p-8 shadow-lg border border-slate-200 dark:border-slate-700">
+        <div class="flex items-center mb-6">
+            <div class="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center">
+                <i class="fa-solid fa-user text-2xl text-indigo-600 dark:text-indigo-400"></i>
+            </div>
+            <div class="ml-4">
+                <h2 class="text-2xl font-bold text-slate-900 dark:text-white">User Profile</h2>
+                <p class="text-slate-600 dark:text-slate-400">Manage your account information</p>
+            </div>
+        </div>
+
+        <!-- Profile Information -->
+        <div class="space-y-6">
+            <div>
+                <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Email Address</label>
+                <div class="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3">
+                    <p class="text-slate-900 dark:text-white">{{ user.email }}</p>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">User ID</label>
+                <div class="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3">
+                    <p class="text-slate-900 dark:text-white font-mono text-sm">{{ user.uid }}</p>
+                </div>
+            </div>
+
+            <!-- Account Actions -->
+            <div class="pt-6 border-t border-slate-200 dark:border-slate-700">
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Account Actions</h3>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-6 py-3 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-not-allowed" disabled>
+                        <i class="fa-solid fa-edit mr-2"></i>Edit Profile (Coming Soon)
+                    </button>
+                    <a href="{{ url_for('auth.logout') }}" class="bg-rose-600 hover:bg-rose-700 text-white px-6 py-3 rounded-lg transition-colors text-center">
+                        <i class="fa-solid fa-sign-out-alt mr-2"></i>Sign Out
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white dark:bg-slate-800/50 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center">
+                <div class="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                    <i class="fa-solid fa-briefcase text-indigo-600 dark:text-indigo-400 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-slate-600 dark:text-slate-400 text-sm">Projects Joined</p>
+                    <p class="text-2xl font-bold text-slate-900 dark:text-white">-</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-slate-800/50 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center">
+                <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                    <i class="fa-solid fa-list-check text-emerald-600 dark:text-emerald-400 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-slate-600 dark:text-slate-400 text-sm">Tasks Completed</p>
+                    <p class="text-2xl font-bold text-slate-900 dark:text-white">-</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

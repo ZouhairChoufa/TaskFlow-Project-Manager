@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - TaskFlow{% endblock %}
+{% block header %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Stats Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white dark:bg-slate-800/50 rounded-xl p-6 hover:scale-105 transition-all duration-300 shadow-lg border border-slate-200 dark:border-slate-700">
+        <div class="flex items-center">
+            <div class="p-3 bg-indigo-100 dark:bg-indigo-600/20 rounded-lg">
+                <i class="fa-solid fa-briefcase text-indigo-600 dark:text-indigo-400 text-xl"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-slate-600 dark:text-slate-400 text-sm">Total Projects</p>
+                <p class="text-2xl font-bold text-slate-900 dark:text-white">{{ stats.total_projects }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-slate-800/50 rounded-xl p-6 hover:scale-105 transition-all duration-300 shadow-lg border border-slate-200 dark:border-slate-700">
+        <div class="flex items-center">
+            <div class="p-3 bg-emerald-100 dark:bg-emerald-600/20 rounded-lg">
+                <i class="fa-solid fa-list-check text-emerald-600 dark:text-emerald-400 text-xl"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-slate-600 dark:text-slate-400 text-sm">Total Tasks</p>
+                <p class="text-2xl font-bold text-slate-900 dark:text-white">{{ stats.total_tasks }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-slate-800/50 rounded-xl p-6 hover:scale-105 transition-all duration-300 shadow-lg border border-slate-200 dark:border-slate-700">
+        <div class="flex items-center">
+            <div class="p-3 bg-rose-100 dark:bg-rose-600/20 rounded-lg">
+                <i class="fa-solid fa-triangle-exclamation text-rose-600 dark:text-rose-400 text-xl"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-slate-600 dark:text-slate-400 text-sm">Overdue Tasks</p>
+                <p class="text-2xl font-bold text-slate-900 dark:text-white">{{ stats.overdue_tasks }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-slate-800/50 rounded-xl p-6 hover:scale-105 transition-all duration-300 shadow-lg border border-slate-200 dark:border-slate-700">
+        <div class="flex items-center">
+            <div class="p-3 bg-amber-100 dark:bg-amber-600/20 rounded-lg">
+                <i class="fa-solid fa-chart-line text-amber-600 dark:text-amber-400 text-xl"></i>
+            </div>
+            <div class="ml-4">
+                <p class="text-slate-600 dark:text-slate-400 text-sm">Completion Rate</p>
+                <p class="text-2xl font-bold text-slate-900 dark:text-white">
+                    {% if stats.total_tasks > 0 %}
+                        {{ "%.0f"|format((stats.status_distribution.done / stats.total_tasks) * 100) }}%
+                    {% else %}
+                        0%
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts and Recent Projects -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Task Distribution Chart -->
+    <div class="bg-white dark:bg-slate-800/50 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-700 h-[400px] flex flex-col">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Task Distribution</h3>
+        <div class="relative flex-1 w-full">
+            <canvas id="taskChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Recent Projects -->
+    <div class="bg-white dark:bg-slate-800/50 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-700 h-[400px] flex flex-col">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Recent Projects</h3>
+        <div class="flex-1 overflow-y-auto space-y-3">
+            {% for project in projects %}
+            {% set current_user_id = 'anonymous' %}
+            {% set is_member = current_user_id in project.get('members', []) %}
+            <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/30 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-300">
+                <div>
+                    <h4 class="text-slate-900 dark:text-white font-medium">{{ project.name }}</h4>
+                    <p class="text-slate-600 dark:text-slate-400 text-sm">{{ project.description[:50] }}...</p>
+                </div>
+                {% if is_member %}
+                <a href="{{ url_for('projects.project_board', project_id=project.id) }}" 
+                   class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+                {% else %}
+                <button onclick="openJoinModal('{{ project.id }}', '{{ project.name }}')" 
+                        class="text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors">
+                    <i class="fa-solid fa-lock"></i>
+                </button>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Task Distribution Chart
+    const ctx = document.getElementById('taskChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['To Do', 'In Progress', 'Done'],
+            datasets: [{
+                data: [
+                    {{ stats.status_distribution.todo }},
+                    {{ stats.status_distribution.in_progress }},
+                    {{ stats.status_distribution.done }}
+                ],
+                backgroundColor: [
+                    '#64748b',
+                    '#6366f1',
+                    '#10b981'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        color: '#475569',
+                        font: {
+                            size: 12,
+                            family: "'Inter', sans-serif"
+                        },
+                        padding: 20,
+                        pointStyleWidth: 10
+                    }
+                }
+            }
+        }
+    });
+
+    // Create Project Modal
+    document.getElementById('createBtn').addEventListener('click', function() {
+        showModal(`
+            <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-4">Create New Project</h3>
+            <form id="projectForm">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Project Name</label>
+                        <input type="text" name="name" required 
+                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Description</label>
+                        <textarea name="description" rows="3"
+                                  class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Access Code</label>
+                        <input type="text" name="access_code" required placeholder="e.g. TEAM2024"
+                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                        <p class="text-slate-500 dark:text-slate-400 text-xs mt-1">Share this code with your team to let them join</p>
+                    </div>
+                    <div>
+                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Deadline (Optional)</label>
+                        <input type="date" name="deadline"
+                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div class="flex space-x-3 pt-4">
+                        <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors">
+                            Create Project
+                        </button>
+                        <button type="button" onclick="hideModal()" class="flex-1 bg-slate-500 dark:bg-slate-600 hover:bg-slate-600 dark:hover:bg-slate-700 text-white py-2 rounded-lg transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </form>
+        `);
+
+        document.getElementById('projectForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            const result = await apiCall('/projects/create', {
+                method: 'POST',
+                body: JSON.stringify(data)
+            });
+            
+            if (result.success) {
+                hideModal();
+                location.reload();
+            }
+        });
+    });
+
+    // Project Join Modal
+    function openJoinModal(projectId, projectName) {
+        showModal(`
+            <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-4">Join Project</h3>
+            <p class="text-slate-600 dark:text-slate-400 mb-4">"${projectName}" is private. Please enter the access code to join.</p>
+            <form id="projectJoinForm">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Access Code</label>
+                        <input type="password" name="access_code" required placeholder="Enter access code"
+                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                        <div id="joinError" class="text-rose-600 text-sm mt-1 hidden"></div>
+                    </div>
+                    <div class="flex space-x-3 pt-4">
+                        <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors">
+                            <i class="fa-solid fa-unlock mr-2"></i>Unlock & Join
+                        </button>
+                        <button type="button" onclick="hideModal()" class="flex-1 bg-slate-500 dark:bg-slate-600 hover:bg-slate-600 dark:hover:bg-slate-700 text-white py-2 rounded-lg transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </form>
+        `);
+
+        document.getElementById('projectJoinForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            const errorDiv = document.getElementById('joinError');
+            
+            try {
+                const result = await apiCall(`/projects/${projectId}/join`, {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                
+                if (result.success) {
+                    hideModal();
+                    window.location.href = `/projects/${projectId}/board`;
+                } else {
+                    errorDiv.textContent = result.message || 'Failed to join project';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Error joining project';
+                errorDiv.classList.remove('hidden');
+            }
+        });
+    }
+</script>
+{% endblock %}
