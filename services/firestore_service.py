@@ -58,7 +58,7 @@ class FirestoreService:
     def delete_project(project_id: str) -> bool:
         """Delete a project and its tasks"""
         db = FirestoreService._get_db()
-        tasks = db.collection('tasks').where(filter=('project_id', '==', project_id)).stream()
+        tasks = db.collection('tasks').where('project_id', '==', project_id).stream()
         for task in tasks:
             task.reference.delete()
         db.collection('projects').document(project_id).delete()
@@ -78,7 +78,7 @@ class FirestoreService:
         """Get all tasks for a project"""
         tasks = []
         db = FirestoreService._get_db()
-        docs = db.collection('tasks').where(filter=('project_id', '==', project_id)).stream()
+        docs = db.collection('tasks').where('project_id', '==', project_id).stream()
         for doc in docs:
             task = doc.to_dict()
             task['id'] = doc.id
@@ -104,7 +104,7 @@ class FirestoreService:
     def find_project_by_access_code(access_code: str) -> Optional[Dict]:
         """Find project by access code"""
         db = FirestoreService._get_db()
-        docs = db.collection('projects').where(filter=('access_code', '==', access_code)).limit(1).stream()
+        docs = db.collection('projects').where('access_code', '==', access_code).limit(1).stream()
         for doc in docs:
             project = doc.to_dict()
             project['id'] = doc.id
@@ -120,6 +120,41 @@ class FirestoreService:
             'members': ArrayUnion([user_id]),
             'updated_at': datetime.utcnow()
         })
+        return True
+    
+    @staticmethod
+    def create_user_profile(uid: str, email: str, username: str) -> bool:
+        """Create user profile in Firestore"""
+        db = FirestoreService._get_db()
+        user_data = {
+            'uid': uid,
+            'email': email,
+            'username': username,
+            'full_name': '',
+            'phone': '',
+            'bio': '',
+            'location': '',
+            'created_at': datetime.utcnow(),
+            'updated_at': datetime.utcnow()
+        }
+        db.collection('users').document(uid).set(user_data)
+        return True
+    
+    @staticmethod
+    def get_user_profile(uid: str) -> Optional[Dict]:
+        """Get user profile from Firestore"""
+        db = FirestoreService._get_db()
+        doc = db.collection('users').document(uid).get()
+        if doc.exists:
+            return doc.to_dict()
+        return None
+    
+    @staticmethod
+    def update_user_profile(uid: str, data: Dict) -> bool:
+        """Update user profile in Firestore"""
+        db = FirestoreService._get_db()
+        data['updated_at'] = datetime.utcnow()
+        db.collection('users').document(uid).update(data)
         return True
     
     @staticmethod

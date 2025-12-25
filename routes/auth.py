@@ -1,5 +1,6 @@
-from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for
+from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, flash
 from functools import wraps
+from services.firestore_service import FirestoreService
 import firebase_admin.auth
 
 auth_bp = Blueprint('auth', __name__)
@@ -33,6 +34,7 @@ def session_login():
     try:
         data = request.get_json()
         id_token = data.get('idToken')
+        username = data.get('username')  # For new registrations
         
         if not id_token:
             return jsonify({'error': 'No ID token provided'}), 400
@@ -42,10 +44,24 @@ def session_login():
         uid = decoded_token['uid']
         email = decoded_token.get('email', '')
         
+        # If username is provided, create user profile (new registration)
+        if username:
+            FirestoreService.create_user_profile(uid, email, username)
+        
+        # Get or create user profile
+        user_profile = FirestoreService.get_user_profile(uid)
+        if not user_profile:
+            # Fallback for existing users without profile
+            FirestoreService.create_user_profile(uid, email, email.split('@')[0])
+            user_profile = FirestoreService.get_user_profile(uid)
+        
         # Store user info in session
         session['user'] = {
             'uid': uid,
-            'email': email
+            'email': email,
+            'username': user_profile.get('username', ''),
+            'full_name': user_profile.get('full_name', ''),
+            'profile': user_profile
         }
         
         return jsonify({'success': True})
@@ -63,4 +79,54 @@ def logout():
 @login_required
 def profile():
     """User profile page"""
-    return render_template('auth/profile.html', user=session.get('user'))
+    user = session.get('user')
+    user_profile = FirestoreService.get_user_profile(user['uid'])
+    return render_template('auth/profile.html', user=user, profile=user_profile)
+
+@auth_bp.route('/update_profile', methods=['POST'])
+@login_required
+def update_profile():
+    """Update user profile"""
+    try:
+        user = session.get('user')
+        uid = user['uid']
+        
+        # Get form data
+        full_name = request.form.get('full_name', '').strip()
+        phone = request.form.get('phone', '').strip()
+        bio = request.form.get('bio', '').strip()
+        location = request.form.get('location', '').strip()
+        linkedin = request.form.get('linkedin', '').strip()
+        github = request.form.get('github', '').strip()
+        
+        # Validate inputs
+        if len(full_name) > 100:
+            flash('Full name must be less than 100 characters', 'error')
+            return redirect(url_for('auth.profile'))
+        
+        if len(bio) > 500:
+            flash('Bio must be less than 500 characters', 'error')
+            return redirect(url_for('auth.profile'))
+        
+        # Update profile data
+        profile_data = {
+            'full_name': full_name,
+            'phone': phone,
+            'bio': bio,
+            'location': location,
+            'linkedin': linkedin,
+            'github': github
+        }
+        
+        # Update in Firestore
+        FirestoreService.update_user_profile(uid, profile_data)
+        
+        # Update session
+        session['user']['full_name'] = full_name
+        
+        flash('Profile updated successfully!', 'success')
+        return redirect(url_for('auth.profile'))
+        
+    except Exception as e:
+        flash(f'Error updating profile: {str(e)}', 'error')
+        return redirect(url_for('auth.profile'))

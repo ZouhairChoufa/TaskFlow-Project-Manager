@@ -1,78 +1,216 @@
 {% extends "base.html" %}
 
 {% block title %}Profile - TaskFlow{% endblock %}
-{% block header %}My Profile{% endblock %}
+{% block header %}Profile Dashboard{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto">
-    <!-- Profile Card -->
-    <div class="bg-white dark:bg-slate-800/50 rounded-xl p-8 shadow-lg border border-slate-200 dark:border-slate-700">
-        <div class="flex items-center mb-6">
-            <div class="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center">
-                <i class="fa-solid fa-user text-2xl text-indigo-600 dark:text-indigo-400"></i>
-            </div>
-            <div class="ml-4">
-                <h2 class="text-2xl font-bold text-slate-900 dark:text-white">User Profile</h2>
-                <p class="text-slate-600 dark:text-slate-400">Manage your account information</p>
-            </div>
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="mb-6">
+            {% for category, message in messages %}
+                <div class="bg-{{ 'emerald' if category == 'success' else 'rose' }}-100 dark:bg-{{ 'emerald' if category == 'success' else 'rose' }}-900/30 border border-{{ 'emerald' if category == 'success' else 'rose' }}-300 dark:border-{{ 'emerald' if category == 'success' else 'rose' }}-700 text-{{ 'emerald' if category == 'success' else 'rose' }}-700 dark:text-{{ 'emerald' if category == 'success' else 'rose' }}-300 px-4 py-3 rounded-lg mb-4">
+                    {{ message }}
+                </div>
+            {% endfor %}
         </div>
+    {% endif %}
+{% endwith %}
 
-        <!-- Profile Information -->
-        <div class="space-y-6">
-            <div>
-                <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Email Address</label>
-                <div class="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3">
-                    <p class="text-slate-900 dark:text-white">{{ user.email }}</p>
+<div class="max-w-7xl mx-auto">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Left Column - Identity Card (Always Visible) -->
+        <div class="">
+            <div class="bg-white dark:bg-slate-800/50 rounded-2xl p-8 shadow-lg border border-slate-200 dark:border-slate-700 sticky top-6">
+                
+                <!-- Avatar Section -->
+                <div class="text-center mb-8">
+                    <div class="w-32 h-32 mx-auto bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+                        <i class="fa-solid fa-user text-4xl text-white"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                        @{{ profile.username or user.username }}
+                    </h2>
+                    <p class="text-slate-600 dark:text-slate-400 text-lg">{{ user.email }}</p>
                 </div>
-            </div>
 
-            <div>
-                <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">User ID</label>
-                <div class="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg px-4 py-3">
-                    <p class="text-slate-900 dark:text-white font-mono text-sm">{{ user.uid }}</p>
+                <!-- Profile Summary -->
+                <div class="space-y-4 mb-8">
+                    {% if profile.full_name %}
+                    <div class="flex items-center text-slate-600 dark:text-slate-400">
+                        <i class="fa-solid fa-id-card w-5 mr-3"></i>
+                        <span class="text-sm">{{ profile.full_name }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if profile.location %}
+                    <div class="flex items-center text-slate-600 dark:text-slate-400">
+                        <i class="fa-solid fa-map-marker-alt w-5 mr-3"></i>
+                        <span class="text-sm">{{ profile.location }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if profile.phone %}
+                    <div class="flex items-center text-slate-600 dark:text-slate-400">
+                        <i class="fa-solid fa-phone w-5 mr-3"></i>
+                        <span class="text-sm">{{ profile.phone }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="flex items-center text-slate-600 dark:text-slate-400">
+                        <i class="fa-solid fa-calendar w-5 mr-3"></i>
+                        <span class="text-sm">Member since {{ profile.created_at.strftime('%B %Y') if profile.created_at else 'Recently' }}</span>
+                    </div>
                 </div>
-            </div>
 
-            <!-- Account Actions -->
-            <div class="pt-6 border-t border-slate-200 dark:border-slate-700">
-                <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Account Actions</h3>
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <button class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-6 py-3 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors cursor-not-allowed" disabled>
-                        <i class="fa-solid fa-edit mr-2"></i>Edit Profile (Coming Soon)
+                <!-- Bio Section -->
+                {% if profile.bio %}
+                <div class="mb-8 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl">
+                    <h3 class="text-sm font-semibold text-slate-900 dark:text-white mb-2">About</h3>
+                    <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">{{ profile.bio }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Action Buttons -->
+                <div class="space-y-3">
+                    <button onclick="toggleEditForm()" 
+                            class="w-full px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all duration-300 hover:scale-105 font-semibold shadow-lg">
+                        <i class="fa-solid fa-edit mr-2"></i>Edit Profile
                     </button>
-                    <a href="{{ url_for('auth.logout') }}" class="bg-rose-600 hover:bg-rose-700 text-white px-6 py-3 rounded-lg transition-colors text-center">
+                    
+                    <a href="{{ url_for('auth.logout') }}" 
+                       class="w-full px-6 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors font-medium text-center block">
                         <i class="fa-solid fa-sign-out-alt mr-2"></i>Sign Out
                     </a>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Quick Stats -->
-    <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-white dark:bg-slate-800/50 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-700">
-            <div class="flex items-center">
-                <div class="p-3 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                    <i class="fa-solid fa-briefcase text-indigo-600 dark:text-indigo-400 text-xl"></i>
+        <!-- Right Column - Edit Form (Hidden by Default) -->
+        <div id="editFormColumn" class="hidden">
+            <div class="bg-white dark:bg-slate-800/50 rounded-2xl p-8 shadow-lg border border-slate-200 dark:border-slate-700">
+                <div class="mb-8">
+                    <h3 class="text-2xl font-bold text-slate-900 dark:text-white mb-2">Edit Profile Details</h3>
+                    <p class="text-slate-600 dark:text-slate-400">Update your personal information and preferences.</p>
                 </div>
-                <div class="ml-4">
-                    <p class="text-slate-600 dark:text-slate-400 text-sm">Projects Joined</p>
-                    <p class="text-2xl font-bold text-slate-900 dark:text-white">-</p>
-                </div>
+
+                <form method="POST" action="{{ url_for('auth.update_profile') }}" class="space-y-6">
+                    
+                    <!-- Full Name -->
+                    <div>
+                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-3">Full Name</label>
+                        <input type="text" name="full_name" value="{{ profile.full_name or '' }}" 
+                               class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
+                               placeholder="Enter your full name">
+                    </div>
+
+                    <!-- Phone Number -->
+                    <div>
+                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-3">Phone Number</label>
+                        <input type="tel" name="phone" value="{{ profile.phone or '' }}" 
+                               class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
+                               placeholder="Enter your phone number">
+                    </div>
+
+                    <!-- Location -->
+                    <div>
+                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-3">Location</label>
+                        <input type="text" name="location" value="{{ profile.location or '' }}" 
+                               class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
+                               placeholder="City, Country">
+                    </div>
+
+                    <!-- Bio -->
+                    <div>
+                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-3">Bio / About Me</label>
+                        <textarea name="bio" rows="4" 
+                                  class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300 resize-none"
+                                  placeholder="Tell us about yourself...">{{ profile.bio or '' }}</textarea>
+                        <p class="text-slate-500 dark:text-slate-400 text-xs mt-2">Maximum 500 characters</p>
+                    </div>
+
+                    <!-- Social Links -->
+                    <div>
+                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-semibold mb-3">Social Links</label>
+                        <div class="space-y-3">
+                            <input type="url" name="linkedin" value="{{ profile.linkedin or '' }}" 
+                                   class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
+                                   placeholder="LinkedIn profile URL">
+                            
+                            <input type="url" name="github" value="{{ profile.github or '' }}" 
+                                   class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-700/50 border border-slate-300 dark:border-slate-600 rounded-xl text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
+                                   placeholder="GitHub profile URL">
+                        </div>
+                    </div>
+
+                    <!-- Form Buttons -->
+                    <div class="pt-6 border-t border-slate-200 dark:border-slate-700">
+                        <div class="flex justify-end space-x-4">
+                            <button type="button" onclick="toggleEditForm()" 
+                                    class="px-6 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors font-medium">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                    class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all duration-300 hover:scale-105 font-semibold shadow-lg">
+                                <i class="fa-solid fa-save mr-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
+    </div>
 
-        <div class="bg-white dark:bg-slate-800/50 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-700">
-            <div class="flex items-center">
-                <div class="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                    <i class="fa-solid fa-list-check text-emerald-600 dark:text-emerald-400 text-xl"></i>
+    <!-- Account Information (Full Width Below) -->
+    <div class="mt-8 bg-white dark:bg-slate-800/50 rounded-2xl p-6 shadow-lg border border-slate-200 dark:border-slate-700">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">Account Information</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-slate-600 dark:text-slate-400 text-sm font-medium mb-2">User ID</label>
+                <div class="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2">
+                    <p class="text-slate-900 dark:text-white font-mono text-xs">{{ user.uid }}</p>
                 </div>
-                <div class="ml-4">
-                    <p class="text-slate-600 dark:text-slate-400 text-sm">Tasks Completed</p>
-                    <p class="text-2xl font-bold text-slate-900 dark:text-white">-</p>
+            </div>
+            <div>
+                <label class="block text-slate-600 dark:text-slate-400 text-sm font-medium mb-2">Username</label>
+                <div class="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2">
+                    <p class="text-slate-900 dark:text-white">@{{ profile.username or user.username }}</p>
+                </div>
+            </div>
+            <div>
+                <label class="block text-slate-600 dark:text-slate-400 text-sm font-medium mb-2">Email</label>
+                <div class="bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-lg px-3 py-2">
+                    <p class="text-slate-900 dark:text-white">{{ user.email }}</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+function toggleEditForm() {
+    const editColumn = document.getElementById('editFormColumn');
+    
+    if (editColumn.classList.contains('hidden')) {
+        // Show form with fade-in animation
+        editColumn.classList.remove('hidden');
+        editColumn.style.opacity = '0';
+        
+        // Trigger fade-in animation
+        setTimeout(() => {
+            editColumn.style.transition = 'opacity 0.4s ease-in-out';
+            editColumn.style.opacity = '1';
+        }, 10);
+    } else {
+        // Hide form with fade-out animation
+        editColumn.style.transition = 'opacity 0.4s ease-in-out';
+        editColumn.style.opacity = '0';
+        
+        setTimeout(() => {
+            editColumn.classList.add('hidden');
+        }, 400);
+    }
+}
+</script>
 {% endblock %}

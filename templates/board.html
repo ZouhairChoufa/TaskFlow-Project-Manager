@@ -27,15 +27,15 @@
     <div class="bg-white dark:bg-slate-800/30 rounded-xl p-4 shadow-lg border border-slate-200 dark:border-slate-700">
         <div class="flex items-center justify-between mb-4">
             <h3 class="font-semibold text-slate-700 dark:text-slate-300 flex items-center">
-                <div class="w-3 h-3 bg-slate-400 dark:bg-slate-500 rounded-full mr-2"></div>
+                <div class="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
                 To Do
-                <span class="ml-2 bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-300 text-xs px-2 py-1 rounded-full">{{ board.todo|length }}</span>
+                <span class="ml-2 bg-blue-100 dark:bg-blue-600 text-blue-700 dark:text-white text-xs px-2 py-1 rounded-full">{{ board.todo|length }}</span>
             </h3>
         </div>
         <div class="space-y-3 min-h-[400px] kanban-column" data-status="todo">
             {% for task in board.todo %}
-            <div class="task-card bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 cursor-move hover:bg-slate-100 dark:hover:bg-slate-700/70 transition-all duration-300 border border-slate-200 dark:border-slate-600" 
-                 data-task-id="{{ task.id }}" draggable="true">
+            <div class="task-card bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-lg p-4 cursor-move hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-300 border border-blue-200 dark:border-blue-700" 
+                 data-task-id="{{ task.id }}" draggable="true" onclick="editTask('{{ task.id }}', '{{ task.title }}', '{{ task.description }}', '{{ task.status }}', '{{ task.priority or 'low' }}', '{{ task.assignee or '' }}', '{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}')">
                 <div class="flex items-start justify-between mb-2">
                     <h4 class="text-slate-900 dark:text-white font-medium">{{ task.title }}</h4>
                     <span class="priority-badge priority-{{ task.priority or 'low' }}">
@@ -60,15 +60,15 @@
     <div class="bg-white dark:bg-slate-800/30 rounded-xl p-4 shadow-lg border border-slate-200 dark:border-slate-700">
         <div class="flex items-center justify-between mb-4">
             <h3 class="font-semibold text-slate-700 dark:text-slate-300 flex items-center">
-                <div class="w-3 h-3 bg-indigo-500 rounded-full mr-2"></div>
+                <div class="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
                 In Progress
-                <span class="ml-2 bg-indigo-100 dark:bg-indigo-600 text-indigo-700 dark:text-white text-xs px-2 py-1 rounded-full">{{ board.in_progress|length }}</span>
+                <span class="ml-2 bg-orange-100 dark:bg-orange-600 text-orange-700 dark:text-white text-xs px-2 py-1 rounded-full">{{ board.in_progress|length }}</span>
             </h3>
         </div>
         <div class="space-y-3 min-h-[400px] kanban-column" data-status="in_progress">
             {% for task in board.in_progress %}
-            <div class="task-card bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 cursor-move hover:bg-slate-100 dark:hover:bg-slate-700/70 transition-all duration-300 border border-slate-200 dark:border-slate-600" 
-                 data-task-id="{{ task.id }}" draggable="true">
+            <div class="task-card bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500 rounded-lg p-4 cursor-move hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-all duration-300 border border-orange-200 dark:border-orange-700" 
+                 data-task-id="{{ task.id }}" draggable="true" onclick="editTask('{{ task.id }}', '{{ task.title }}', '{{ task.description }}', '{{ task.status }}', '{{ task.priority or 'low' }}', '{{ task.assignee or '' }}', '{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}')">
                 <div class="flex items-start justify-between mb-2">
                     <h4 class="text-slate-900 dark:text-white font-medium">{{ task.title }}</h4>
                     <span class="priority-badge priority-{{ task.priority or 'low' }}">
@@ -100,8 +100,8 @@
         </div>
         <div class="space-y-3 min-h-[400px] kanban-column" data-status="done">
             {% for task in board.done %}
-            <div class="task-card bg-slate-50 dark:bg-slate-700/50 rounded-lg p-4 cursor-move hover:bg-slate-100 dark:hover:bg-slate-700/70 transition-all duration-300 border border-slate-200 dark:border-slate-600" 
-                 data-task-id="{{ task.id }}" draggable="true">
+            <div class="task-card bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 rounded-lg p-4 cursor-move hover:bg-green-100 dark:hover:bg-green-900/30 transition-all duration-300 border border-green-200 dark:border-green-700" 
+                 data-task-id="{{ task.id }}" draggable="true" onclick="editTask('{{ task.id }}', '{{ task.title }}', '{{ task.description }}', '{{ task.status }}', '{{ task.priority or 'low' }}', '{{ task.assignee or '' }}', '{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}')">
                 <div class="flex items-start justify-between mb-2">
                     <h4 class="text-slate-900 dark:text-white font-medium">{{ task.title }}</h4>
                     <span class="priority-badge priority-{{ task.priority or 'low' }}">
@@ -180,6 +180,9 @@
                 // Move task visually
                 this.appendChild(draggedTask);
                 
+                // Update task color based on new status
+                updateTaskColor(draggedTask, newStatus);
+                
                 // Update task status in backend
                 try {
                     const result = await apiCall(`/tasks/${taskId}/move`, {
@@ -217,6 +220,14 @@
                     </div>
                     <div class="grid grid-cols-2 gap-4">
                         <div>
+                            <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Status</label>
+                            <select name="status" class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                                <option value="todo">To Do</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="done">Done</option>
+                            </select>
+                        </div>
+                        <div>
                             <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Priority</label>
                             <select name="priority" class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
                                 <option value="low">Low</option>
@@ -224,11 +235,11 @@
                                 <option value="high">High</option>
                             </select>
                         </div>
-                        <div>
-                            <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Due Date</label>
-                            <input type="date" name="due_date"
-                                   class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
-                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Due Date</label>
+                        <input type="date" name="due_date"
+                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
                     </div>
                     <div>
                         <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Assignee</label>
@@ -264,5 +275,114 @@
             }
         });
     });
+
+    // Update task color based on status
+    function updateTaskColor(taskElement, status) {
+        // Remove all status colors
+        taskElement.className = taskElement.className.replace(/bg-\w+-\d+/g, '');
+        taskElement.className = taskElement.className.replace(/border-\w+-\d+/g, '');
+        taskElement.className = taskElement.className.replace(/hover:bg-\w+-\d+/g, '');
+        
+        // Add new color based on status
+        if (status === 'todo') {
+            taskElement.className += ' bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30 border-blue-200 dark:border-blue-700';
+        } else if (status === 'in_progress') {
+            taskElement.className += ' bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500 hover:bg-orange-100 dark:hover:bg-orange-900/30 border-orange-200 dark:border-orange-700';
+        } else if (status === 'done') {
+            taskElement.className += ' bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 hover:bg-green-100 dark:hover:bg-green-900/30 border-green-200 dark:border-green-700';
+        }
+    }
+
+    // Edit Task Function
+    function editTask(id, title, description, status, priority, assignee, dueDate) {
+        showModal(`
+            <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-4">Edit Task</h3>
+            <form id="editTaskForm">
+                <input type="hidden" name="task_id" value="${id}">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Task Title</label>
+                        <input type="text" name="title" value="${title}" required 
+                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Description</label>
+                        <textarea name="description" rows="3" class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">${description}</textarea>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Status</label>
+                            <select name="status" class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                                <option value="todo" ${status === 'todo' ? 'selected' : ''}>To Do</option>
+                                <option value="in_progress" ${status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                                <option value="done" ${status === 'done' ? 'selected' : ''}>Done</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Priority</label>
+                            <select name="priority" class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                                <option value="low" ${priority === 'low' ? 'selected' : ''}>Low</option>
+                                <option value="medium" ${priority === 'medium' ? 'selected' : ''}>Medium</option>
+                                <option value="high" ${priority === 'high' ? 'selected' : ''}>High</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Due Date</label>
+                        <input type="date" name="due_date" value="${dueDate}"
+                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Assignee</label>
+                        <input type="text" name="assignee" value="${assignee}" placeholder="Enter assignee name"
+                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div class="flex space-x-3 pt-4">
+                        <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors">
+                            Update Task
+                        </button>
+                        <button type="button" onclick="deleteTask('${id}')" class="bg-rose-600 hover:bg-rose-700 text-white py-2 px-4 rounded-lg transition-colors">
+                            Delete
+                        </button>
+                        <button type="button" onclick="hideModal()" class="bg-slate-500 dark:bg-slate-600 hover:bg-slate-600 dark:hover:bg-slate-700 text-white py-2 px-4 rounded-lg transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </form>
+        `);
+
+        document.getElementById('editTaskForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            const taskId = data.task_id;
+            delete data.task_id;
+            
+            const result = await apiCall(`/tasks/${taskId}/update`, {
+                method: 'PUT',
+                body: JSON.stringify(data)
+            });
+            
+            if (result.success) {
+                hideModal();
+                location.reload();
+            }
+        });
+    }
+
+    // Delete Task Function
+    async function deleteTask(taskId) {
+        if (confirm('Are you sure you want to delete this task?')) {
+            const result = await apiCall(`/tasks/${taskId}/delete`, {
+                method: 'DELETE'
+            });
+            
+            if (result.success) {
+                hideModal();
+                location.reload();
+            }
+        }
+    }
 </script>
 {% endblock %}
