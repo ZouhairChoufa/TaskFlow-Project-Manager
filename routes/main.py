@@ -9,8 +9,19 @@ main_bp = Blueprint('main', __name__)
 def dashboard():
     """Dashboard with analytics"""
     stats = FirestoreService.get_dashboard_stats()
+    
+    # Get user's projects (member + invited)
+    from flask import session
+    user_email = session.get('user', {}).get('email', 'anonymous@example.com')
     projects = FirestoreService.get_projects()
-    return render_template('dashboard.html', stats=stats, projects=projects)
+    
+    # Filter projects where user is member or invited
+    user_projects = []
+    for project in projects:
+        if 'anonymous' in project.get('members', []) or user_email in project.get('invitations', []):
+            user_projects.append(project)
+    
+    return render_template('dashboard.html', stats=stats, projects=user_projects)
 
 @main_bp.route('/api/dashboard-stats')
 @login_required

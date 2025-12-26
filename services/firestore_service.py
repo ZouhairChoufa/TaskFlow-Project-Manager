@@ -158,6 +158,24 @@ class FirestoreService:
         return True
     
     @staticmethod
+    def add_invitation_to_project(project_id: str, email: str) -> bool:
+        """Ajouter une invitation à un projet"""
+        from google.cloud.firestore import ArrayUnion
+        db = FirestoreService._get_db()
+        db.collection('projects').document(project_id).update({
+            'invitations': ArrayUnion([email]),
+            'updated_at': datetime.utcnow()
+        })
+        return True
+    
+    @staticmethod
+    def get_user_invitations(email: str) -> List[Dict]:
+        """Récupérer les invitations d'un utilisateur"""
+        db = FirestoreService._get_db()
+        docs = db.collection('projects').where('invitations', 'array_contains', email).stream()
+        return [{'id': doc.id, **doc.to_dict()} for doc in docs]
+    
+    @staticmethod
     def get_dashboard_stats() -> Dict:
         """Get dashboard statistics"""
         db = FirestoreService._get_db()

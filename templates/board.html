@@ -1,8 +1,8 @@
-{% extends "base.html" %}
+{% extends "base_fr.html" %}
 
-{% block title %}{{ project.name }} - Kanban Board{% endblock %}
-{% block header %}{{ project.name }} - Kanban Board{% endblock %}
-{% block create_btn %}New Task{% endblock %}
+{% block title %}{{ project.name }} - Tableau Kanban{% endblock %}
+{% block header %}{{ project.name }} - Tableau Kanban{% endblock %}
+{% block create_btn %}Nouvelle Tâche{% endblock %}
 
 {% block content %}
 <!-- Project Info -->
@@ -28,7 +28,7 @@
         <div class="flex items-center justify-between mb-4">
             <h3 class="font-semibold text-slate-700 dark:text-slate-300 flex items-center">
                 <div class="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
-                To Do
+                À Faire
                 <span class="ml-2 bg-blue-100 dark:bg-blue-600 text-blue-700 dark:text-white text-xs px-2 py-1 rounded-full">{{ board.todo|length }}</span>
             </h3>
         </div>
@@ -61,7 +61,7 @@
         <div class="flex items-center justify-between mb-4">
             <h3 class="font-semibold text-slate-700 dark:text-slate-300 flex items-center">
                 <div class="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
-                In Progress
+                En Cours
                 <span class="ml-2 bg-orange-100 dark:bg-orange-600 text-orange-700 dark:text-white text-xs px-2 py-1 rounded-full">{{ board.in_progress|length }}</span>
             </h3>
         </div>
@@ -94,7 +94,7 @@
         <div class="flex items-center justify-between mb-4">
             <h3 class="font-semibold text-slate-700 dark:text-slate-300 flex items-center">
                 <div class="w-3 h-3 bg-emerald-500 rounded-full mr-2"></div>
-                Done
+                Terminé
                 <span class="ml-2 bg-emerald-100 dark:bg-emerald-600 text-emerald-700 dark:text-white text-xs px-2 py-1 rounded-full">{{ board.done|length }}</span>
             </h3>
         </div>
@@ -142,6 +142,14 @@
 
 {% block scripts %}
 <script>
+    // Activer la navigation projet
+    document.addEventListener('DOMContentLoaded', function() {
+        switchToProjectNav('{{ project.id }}', '{{ project.name }}');
+        
+        // Marquer l'onglet actuel comme actif
+        document.getElementById('kanbanTab').classList.add('bg-indigo-100', 'dark:bg-indigo-900/30', 'text-indigo-600', 'dark:text-indigo-400');
+    });
+
     let draggedTask = null;
 
     // Drag and Drop functionality
