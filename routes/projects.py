@@ -8,53 +8,95 @@ projects_bp = Blueprint('projects', __name__)
 @projects_bp.route('/')
 @login_required
 def list_projects():
-    """List all projects"""
-    projects = FirestoreService.get_projects()
-    return render_template('projects.html', projects=projects)
+    """List projects for current user only"""
+    from flask import session
+    current_user_id = session.get('user', {}).get('uid')
+    
+    if not current_user_id:
+        current_user_id = 'anonymous'  # Fallback for development
+    
+    # Get all projects and filter by membership
+    all_projects = FirestoreService.get_projects()
+    user_projects = []
+    
+    for project in all_projects:
+        is_owner = project.get('created_by') == current_user_id
+        is_member = current_user_id in project.get('members', [])
+        if is_owner or is_member:
+            user_projects.append(project)
+    
+    return render_template('projects.html', projects=user_projects)
 
 @projects_bp.route('/create', methods=['GET', 'POST'])
+@login_required
 def create_project():
     """Create a new project"""
     if request.method == 'POST':
+        from flask import session
         data = request.get_json()
         
         # Validate access code
         access_code = data.get('access_code', '').strip()
         if len(access_code) < 4:
-            return jsonify({'error': 'Access code must be at least 4 characters'}), 400
+            return jsonify({'error': 'Le code d\'accès doit contenir au moins 4 caractères'}), 400
         
         # Convert deadline string to datetime if provided
         if data.get('deadline'):
             data['deadline'] = datetime.fromisoformat(data['deadline'].replace('Z', '+00:00'))
         
-        # TODO: Replace 'anonymous' with actual current_user.uid when auth is implemented
-        current_user_id = 'anonymous'  # Placeholder for Firebase Auth UID
+        # Get current user ID from session
+        current_user_id = session.get('user', {}).get('uid')
+        if not current_user_id:
+            return jsonify({'error': 'User not authenticated'}), 401
+        
         project_id = FirestoreService.create_project(data, current_user_id)
         return jsonify({'success': True, 'id': project_id})
     
     return render_template('project_form.html')
 
 @projects_bp.route('/<project_id>')
+@login_required
 def view_project(project_id):
-    """View project details"""
+    """View project details - Join Once Access Forever"""
+    from flask import session
+    current_user_id = session.get('user', {}).get('uid')
+    
+    if not current_user_id:
+        current_user_id = 'anonymous'
+    
     project = FirestoreService.get_project(project_id)
     if not project:
         return "Project not found", 404
-    return render_template('project_detail.html', project=project)
+    
+    # Check access permission
+    is_owner = project.get('created_by') == current_user_id
+    is_member = current_user_id in project.get('members', [])
+    
+    if not (is_owner or is_member):
+        # Show join page instead of 403
+        return render_template('join_project.html', project=project)
+        
+    return redirect(url_for('projects.project_overview', project_id=project_id))
 
 @projects_bp.route('/<project_id>/board')
+@login_required
 def project_board(project_id):
     """Kanban board for a project"""
+    from flask import session
     project = FirestoreService.get_project(project_id)
     if not project:
         return "Project not found", 404
     
-    # TODO: Replace with actual current_user.uid when auth is implemented
-    current_user_id = 'anonymous'
+    current_user_id = session.get('user', {}).get('uid')
+    if not current_user_id:
+        return redirect(url_for('auth.login'))
     
     # Check if user is a member of the project
-    if current_user_id not in project.get('members', []):
-        return redirect(url_for('main.dashboard'))
+    is_owner = project.get('created_by') == current_user_id
+    is_member = current_user_id in project.get('members', [])
+    
+    if not (is_owner or is_member):
+        return render_template('join_project.html', project=project)
     
     tasks = FirestoreService.get_tasks(project_id)
     
@@ -79,8 +121,10 @@ def edit_project(project_id):
     return jsonify({'success': True})
 
 @projects_bp.route('/<project_id>/join', methods=['POST'])
+@login_required
 def join_specific_project(project_id):
     """Join a specific project by access code"""
+    from flask import session
     data = request.get_json()
     access_code = data.get('access_code', '').strip()
     
@@ -96,33 +140,44 @@ def join_specific_project(project_id):
     if project.get('access_code') != access_code:
         return jsonify({'success': False, 'message': 'Invalid Access Code'}), 403
     
-    # TODO: Replace with actual current_user.uid when auth is implemented
-    current_user_id = 'anonymous'
+    # Get current user ID from session
+    current_user_id = session.get('user', {}).get('uid')
+    if not current_user_id:
+        return jsonify({'success': False, 'message': 'User not authenticated'}), 401
     
     # Check if user is already a member
     if current_user_id in project.get('members', []):
-        return jsonify({'success': True, 'message': 'Already a member'})
+        return jsonify({'success': True, 'message': 'Vous êtes déjà membre de ce projet', 'already_member': True})
     
     # Add user to project members
     FirestoreService.add_member_to_project(project_id, current_user_id)
-    return jsonify({'success': True})
+    return jsonify({'success': True, 'message': 'Vous avez rejoint le projet avec succès'})
 
 @projects_bp.route('/<project_id>/overview')
 @login_required
 def project_overview(project_id):
     """Vue d'ensemble du projet"""
+    from flask import session
     project = FirestoreService.get_project(project_id)
     if not project:
         return "Projet non trouvé", 404
     
-    # TODO: Replace with actual current_user.uid when auth is implemented
-    current_user_id = 'anonymous'
+    current_user_id = session.get('user', {}).get('uid')
+    if not current_user_id:
+        return redirect(url_for('auth.login'))
     
     # Check if user is a member of the project
-    if current_user_id not in project.get('members', []):
-        return redirect(url_for('main.dashboard'))
+    is_owner = project.get('created_by') == current_user_id
+    is_member = current_user_id in project.get('members', [])
+    
+    if not (is_owner or is_member):
+        return render_template('join_project.html', project=project)
     
     tasks = FirestoreService.get_tasks(project_id)
+    
+    # Get member data
+    member_ids = project.get('members', [])
+    members_data = FirestoreService.get_users_by_ids(member_ids)
     
     # Calculate project statistics
     total_tasks = len(tasks)
@@ -144,18 +199,25 @@ def project_overview(project_id):
         'team_size': team_size
     }
     
-    return render_template('project_overview.html', project=project, stats=stats, recent_tasks=recent_tasks)
+    return render_template('project_overview.html', project=project, stats=stats, recent_tasks=recent_tasks, members_data=members_data)
 
 @projects_bp.route('/<project_id>/calendar/data/<int:year>/<int:month>')
 @login_required
 def calendar_data(project_id, year, month):
     """API pour récupérer les données du calendrier"""
+    from flask import session
     project = FirestoreService.get_project(project_id)
     if not project:
         return jsonify({'error': 'Projet non trouvé'}), 404
     
-    current_user_id = 'anonymous'
-    if current_user_id not in project.get('members', []):
+    current_user_id = session.get('user', {}).get('uid')
+    if not current_user_id:
+        return jsonify({'error': 'Non authentifié'}), 401
+    
+    is_owner = project.get('created_by') == current_user_id
+    is_member = current_user_id in project.get('members', [])
+    
+    if not (is_owner or is_member):
         return jsonify({'error': 'Accès refusé'}), 403
     
     tasks = FirestoreService.get_tasks(project_id)
@@ -209,16 +271,21 @@ def calendar_data(project_id, year, month):
 @login_required
 def project_calendar(project_id):
     """Calendrier du projet"""
+    from flask import session
     project = FirestoreService.get_project(project_id)
     if not project:
         return "Projet non trouvé", 404
     
-    # TODO: Replace with actual current_user.uid when auth is implemented
-    current_user_id = 'anonymous'
+    current_user_id = session.get('user', {}).get('uid')
+    if not current_user_id:
+        return redirect(url_for('auth.login'))
     
     # Check if user is a member of the project
-    if current_user_id not in project.get('members', []):
-        return redirect(url_for('main.dashboard'))
+    is_owner = project.get('created_by') == current_user_id
+    is_member = current_user_id in project.get('members', [])
+    
+    if not (is_owner or is_member):
+        return render_template('join_project.html', project=project)
     
     tasks = FirestoreService.get_tasks(project_id)
     
@@ -287,6 +354,7 @@ def project_calendar(project_id):
 @login_required
 def invite_member(project_id):
     """Inviter un membre par email"""
+    from flask import session
     data = request.get_json()
     email = data.get('email', '').strip().lower()
     
@@ -297,18 +365,105 @@ def invite_member(project_id):
     if not project:
         return jsonify({'error': 'Projet non trouvé'}), 404
     
-    # TODO: Replace with actual current_user.uid when auth is implemented
-    current_user_id = 'anonymous'
+    current_user_id = session.get('user', {}).get('uid')
+    if not current_user_id:
+        return jsonify({'error': 'Non authentifié'}), 401
     
     # Check if user is a member of the project
-    if current_user_id not in project.get('members', []):
+    is_owner = project.get('created_by') == current_user_id
+    is_member = current_user_id in project.get('members', [])
+    
+    if not (is_owner or is_member):
         return jsonify({'error': 'Accès refusé'}), 403
     
     # Add email to project invitations
     FirestoreService.add_invitation_to_project(project_id, email)
     return jsonify({'success': True, 'message': f'Invitation envoyée à {email}'})
-def join_project():
+@projects_bp.route('/join_project/<project_id>', methods=['POST'])
+@login_required
+def join_project_route(project_id):
+    """ID-based password verification - prevents duplicate code conflicts"""
+    from flask import session
+    data = request.get_json()
+    access_code = data.get('access_code', '').strip()
+    
+    if not access_code:
+        return jsonify({'success': False, 'message': 'Code d\'accès requis'}), 400
+    
+    # Get current user ID
+    current_user_id = session.get('user', {}).get('uid')
+    if not current_user_id:
+        return jsonify({'success': False, 'message': 'Utilisateur non authentifié'}), 401
+    
+    # Get project by ID (not by access code)
+    project = FirestoreService.get_project(project_id)
+    if not project:
+        return jsonify({'success': False, 'message': 'Projet non trouvé'}), 404
+    
+    # Verify access code matches this specific project
+    if project.get('access_code') != access_code:
+        return jsonify({'success': False, 'message': 'Code incorrect'}), 403
+    
+    # Check if already a member
+    if current_user_id in project.get('members', []):
+        return jsonify({'success': True, 'message': 'Vous êtes déjà membre de ce projet', 'already_member': True})
+    
+    # Add user to members array using arrayUnion
+    from google.cloud.firestore import ArrayUnion
+    db = FirestoreService._get_db()
+    db.collection('projects').document(project_id).update({
+        'members': ArrayUnion([current_user_id]),
+        'updated_at': datetime.utcnow()
+    })
+    
+    return jsonify({'success': True, 'message': 'Projet rejoint avec succès'})
+@projects_bp.route('/search_and_join', methods=['POST'])
+@login_required
+def search_and_join():
+    """Search project by name and join with access code"""
+    from flask import session
+    data = request.get_json()
+    project_name = data.get('project_name', '').strip()
+    access_code = data.get('access_code', '').strip()
+    
+    if not project_name or not access_code:
+        return jsonify({'error': 'Nom du projet et code d\'accès requis'}), 400
+    
+    # Get current user ID
+    current_user_id = session.get('user', {}).get('uid')
+    if not current_user_id:
+        return jsonify({'error': 'Utilisateur non authentifié'}), 401
+    
+    # Find project by name
+    all_projects = FirestoreService.get_projects()
+    project = None
+    for p in all_projects:
+        if p.get('name', '').lower() == project_name.lower():
+            project = p
+            break
+    
+    if not project:
+        return jsonify({'error': 'Projet non trouvé'}), 404
+    
+    # Verify access code
+    if project.get('access_code') != access_code:
+        return jsonify({'error': 'Code incorrect'}), 403
+    
+    # Check if already a member
+    if current_user_id in project.get('members', []):
+        return jsonify({'success': True, 'message': 'Vous êtes déjà membre de ce projet', 'already_member': True})
+    
+    # Add user to members array
+    from google.cloud.firestore import ArrayUnion
+    db = FirestoreService._get_db()
+    db.collection('projects').document(project['id']).update({
+        'members': ArrayUnion([current_user_id]),
+        'updated_at': datetime.utcnow()
+    })
+    
+    return jsonify({'success': True, 'message': f'Projet "{project_name}" rejoint avec succès'})
     """Join a project by access code"""
+    from flask import session
     data = request.get_json()
     access_code = data.get('access_code', '').strip()
     
@@ -320,12 +475,14 @@ def join_project():
     if not project:
         return jsonify({'error': 'Invalid access code'}), 404
     
-    # TODO: Replace with actual current_user.uid when auth is implemented
-    current_user_id = 'anonymous'
+    # Get current user ID from session
+    current_user_id = session.get('user', {}).get('uid')
+    if not current_user_id:
+        return jsonify({'error': 'User not authenticated'}), 401
     
     # Check if user is already a member
     if current_user_id in project.get('members', []):
-        return jsonify({'message': 'Already a member', 'project_id': project['id']})
+        return jsonify({'success': True, 'message': 'Vous êtes déjà membre de ce projet', 'project_id': project['id'], 'already_member': True})
     
     # Add user to project members
     FirestoreService.add_member_to_project(project['id'], current_user_id)

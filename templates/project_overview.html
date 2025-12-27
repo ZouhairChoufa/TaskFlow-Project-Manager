@@ -133,13 +133,18 @@
             </h3>
             <div class="flex items-center justify-between">
                 <div class="flex -space-x-2">
-                    {% for i in range(stats.team_size) %}
-                    <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-lg">
-                        <i class="fa-solid fa-user text-white text-sm"></i>
+                    {% for member in members_data %}
+                    <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center border-2 border-white dark:border-slate-800 shadow-lg cursor-pointer hover:scale-110 transition-transform"
+                         onclick="showMemberInfo(this)"
+                         data-member-id="{{ member.uid }}"
+                         data-username="{{ member.username }}"
+                         data-email="{{ member.email }}"
+                         data-phone="{{ member.phone if member.phone else 'Non renseigné' }}">
+                        <span class="text-indigo-600 dark:text-indigo-400 text-xs font-semibold">{{ member.username | initials }}</span>
                     </div>
                     {% endfor %}
                 </div>
-                <span class="text-sm text-slate-600 dark:text-slate-400">{{ stats.team_size }} membre{{ 's' if stats.team_size > 1 else '' }}</span>
+                <span class="text-sm text-slate-600 dark:text-slate-400">{{ members_data|length }} membre{{ 's' if members_data|length > 1 else '' }}</span>
             </div>
             <button id="inviteMemberBtn" class="w-full mt-4 px-4 py-2 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors">
                 <i class="fa-solid fa-user-plus mr-2"></i>Inviter des Membres
@@ -164,7 +169,8 @@
             </div>
         </div>
 
-        <!-- Code d'Accès -->
+        {% if project.created_by == session.get('user', {}).get('uid') %}
+        <!-- Code d'Accès (Owner Only) -->
         <div class="bg-white dark:bg-slate-800/50 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-700">
             <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
                 <i class="fa-solid fa-key text-indigo-500 mr-2"></i>Code d'Accès
@@ -176,6 +182,18 @@
                 Partagez ce code pour inviter des membres
             </p>
         </div>
+        {% else %}
+        <!-- Member Badge -->
+        <div class="bg-white dark:bg-slate-800/50 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-700">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fa-solid fa-check-circle text-teal-600 dark:text-teal-400 text-2xl"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Membre du Projet</h3>
+                <p class="text-sm text-slate-600 dark:text-slate-400">Vous avez accès à ce projet</p>
+            </div>
+        </div>
+        {% endif %}
     </div>
 </div>
 
@@ -196,7 +214,7 @@
 <script>
     // Activer la navigation projet
     document.addEventListener('DOMContentLoaded', function() {
-        switchToProjectNav('{{ project.id }}', '{{ project.name }}');
+        switchToProjectNav('{{ project.id }}', '{{ project.name|replace("'", "\\'")|replace('"', '\\"') }}');
         
         // Marquer l'onglet actuel comme actif
         document.getElementById('overviewTab').classList.add('bg-indigo-100', 'dark:bg-indigo-900/30', 'text-indigo-600', 'dark:text-indigo-400');
@@ -243,7 +261,7 @@
             
             if (result.success) {
                 hideModal();
-                showNotification(result.message, 'success');
+                showToast(result.message, 'success');
             }
         });
     });
@@ -317,7 +335,7 @@
             
             if (result.success) {
                 hideModal();
-                showNotification('Tâche créée avec succès !', 'success');
+                showToast('Tâche créée avec succès !', 'success');
                 setTimeout(() => location.reload(), 1500);
             }
         });

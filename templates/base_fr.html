@@ -27,17 +27,20 @@
         <!-- Sidebar Dynamique -->
         <aside id="sidebar" class="w-64 bg-white dark:bg-slate-800/50 border-r border-slate-200 dark:border-slate-700 transition-all duration-300 ease-in-out">
             <div class="p-6">
-                <h1 class="text-2xl font-bold text-slate-900 dark:text-white mb-8">
+                <a href="{{ url_for('main.dashboard') }}" class="text-2xl font-bold text-slate-900 dark:text-white mb-8 block hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-300">
                     <i class="fa-solid fa-layer-group text-indigo-500 dark:text-indigo-400 mr-2"></i>TaskFlow
-                </h1>
+                </a>
                 
                 <!-- Navigation Globale (par défaut) -->
                 <nav id="globalNav" class="space-y-2 transition-all duration-300 ease-in-out">
-                    <a href="{{ url_for('main.dashboard') }}" class="flex items-center px-4 py-3 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-lg transition-all duration-300">
+                    <a href="{{ url_for('main.dashboard') }}" class="flex items-center px-4 py-3 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-lg transition-all duration-300 {{ 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' if request.endpoint == 'main.dashboard' }}">
                         <i class="fa-solid fa-chart-line mr-3"></i>Tableau de Bord
                     </a>
-                    <a href="{{ url_for('projects.list_projects') }}" class="flex items-center px-4 py-3 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-lg transition-all duration-300">
+                    <a href="{{ url_for('projects.list_projects') }}" class="flex items-center px-4 py-3 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-lg transition-all duration-300 {{ 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' if request.endpoint == 'projects.list_projects' }}">
                         <i class="fa-solid fa-briefcase mr-3"></i>Projets
+                    </a>
+                    <a href="{{ url_for('main.contact') }}" class="flex items-center px-4 py-3 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-lg transition-all duration-300 {{ 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' if request.endpoint == 'main.contact' }}">
+                        <i class="fa-solid fa-envelope mr-3"></i>Contactez-nous
                     </a>
                 </nav>
 
@@ -104,6 +107,7 @@
                         </a>
                         {% endif %}
                         {% if session.get('user') %}
+                        {% if request.endpoint == 'projects.list_projects' %}
                         <button id="joinBtn" class="bg-white dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 border border-indigo-600 dark:border-indigo-400 px-4 py-2 rounded-lg transition-all duration-300 hover:bg-indigo-50 dark:hover:bg-slate-600">
                             <i class="fa-solid fa-user-plus mr-2"></i>Rejoindre un Projet
                         </button>
@@ -111,12 +115,26 @@
                             <i class="fa-solid fa-plus mr-2"></i>{% block create_btn %}Nouveau Projet{% endblock %}
                         </button>
                         {% endif %}
+                        {% endif %}
                     </div>
                 </div>
             </header>
 
             <!-- Content Area -->
             <div class="flex-1 overflow-auto p-6 bg-slate-50 dark:bg-transparent transition-colors duration-300">
+                <!-- Flash Messages as Toasts -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                {% for category, message in messages %}
+                                    showToast('{{ message }}', '{{ 'success' if category == 'success' else 'error' }}');
+                                {% endfor %}
+                            });
+                        </script>
+                    {% endif %}
+                {% endwith %}
+                
                 {% block content %}{% endblock %}
             </div>
         </main>
@@ -126,6 +144,47 @@
     <div id="modalContainer" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
         <div class="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl border border-slate-200 dark:border-slate-700 transition-colors duration-300">
             <div id="modalContent"></div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-md mx-4 shadow-2xl border border-slate-200 dark:border-slate-700 transform transition-all duration-300 scale-95">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-rose-100 dark:bg-rose-900/30 mb-4">
+                    <i class="fa-solid fa-exclamation-triangle text-rose-600 dark:text-rose-400 text-2xl"></i>
+                </div>
+                <h3 id="deleteTitle" class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Confirmer la suppression</h3>
+                <p id="deleteMessage" class="text-slate-600 dark:text-slate-400 mb-6">Cette action ne peut pas être annulée.</p>
+                <div class="flex space-x-3">
+                    <button id="deleteCancelBtn" class="flex-1 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                        Annuler
+                    </button>
+                    <button id="deleteConfirmBtn" class="flex-1 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors">
+                        Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Member Info Modal -->
+    <div id="memberModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div class="bg-white dark:bg-slate-800 rounded-xl p-6 w-full max-w-sm mx-4 shadow-2xl border border-slate-200 dark:border-slate-700 transform transition-all duration-300">
+            <div class="text-center">
+                <div class="w-20 h-20 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span id="memberInitials" class="text-indigo-600 dark:text-indigo-400 text-2xl font-bold"></span>
+                </div>
+                <h3 id="memberUsername" class="text-xl font-bold text-slate-900 dark:text-white mb-2"></h3>
+                <p id="memberEmail" class="text-slate-600 dark:text-slate-400 mb-2"></p>
+                <p id="memberPhone" class="text-sm text-slate-500 dark:text-slate-500 mb-4"></p>
+                <button onclick="hideMemberModal()" class="px-6 py-2 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                    Fermer
+                </button>
+            </div>
         </div>
     </div>
 
@@ -199,70 +258,163 @@
         }
 
         // Join Project Modal
-        document.getElementById('joinBtn').addEventListener('click', function() {
-            showModal(`
-                <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-4">Rejoindre un Projet</h3>
-                <form id="joinForm">
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Code d'Accès</label>
-                            <input type="text" name="access_code" required placeholder="Entrez le code d'accès du projet"
-                                   class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
-                            <p class="text-slate-500 dark:text-slate-400 text-xs mt-1">Demandez le code d'accès à votre chef d'équipe</p>
+        const joinBtn = document.getElementById('joinBtn');
+        if (joinBtn) {
+            joinBtn.addEventListener('click', function() {
+                showModal(`
+                    <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-4">Rejoindre un Projet</h3>
+                    <form id="joinForm">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Nom du Projet</label>
+                                <input type="text" name="project_name" required placeholder="Nom exact du projet"
+                                       class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                            </div>
+                            <div>
+                                <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Code d'Accès</label>
+                                <input type="password" name="access_code" required placeholder="Code d'accès du projet"
+                                       class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                                <p class="text-slate-500 dark:text-slate-400 text-xs mt-1">Demandez ces informations à votre chef d'équipe</p>
+                            </div>
+                            <div class="flex space-x-3 pt-4">
+                                <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors">
+                                    Rejoindre le Projet
+                                </button>
+                                <button type="button" onclick="hideModal()" class="flex-1 bg-slate-500 dark:bg-slate-600 hover:bg-slate-600 dark:hover:bg-slate-700 text-white py-2 rounded-lg transition-colors">
+                                    Annuler
+                                </button>
+                            </div>
                         </div>
-                        <div class="flex space-x-3 pt-4">
-                            <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors">
-                                Rejoindre le Projet
-                            </button>
-                            <button type="button" onclick="hideModal()" class="flex-1 bg-slate-500 dark:bg-slate-600 hover:bg-slate-600 dark:hover:bg-slate-700 text-white py-2 rounded-lg transition-colors">
-                                Annuler
-                            </button>
-                        </div>
-                    </div>
-                </form>
-            `);
+                    </form>
+                `);
 
-            document.getElementById('joinForm').addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const formData = new FormData(e.target);
-                const data = Object.fromEntries(formData);
-                
-                try {
-                    const result = await apiCall('/projects/join', {
-                        method: 'POST',
-                        body: JSON.stringify(data)
-                    });
+                document.getElementById('joinForm').addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(e.target);
+                    const data = Object.fromEntries(formData);
                     
-                    if (result.success) {
-                        hideModal();
-                        showNotification(`Projet ${result.project_name} rejoint avec succès !`, 'success');
-                        setTimeout(() => location.reload(), 1500);
-                    } else {
-                        showNotification(result.error || 'Échec de la connexion au projet', 'error');
+                    try {
+                        const result = await apiCall('/projects/search_and_join', {
+                            method: 'POST',
+                            body: JSON.stringify(data)
+                        });
+                        
+                        if (result.success) {
+                            hideModal();
+                            showToast(result.message, 'success');
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            showToast(result.error || 'Échec de la connexion au projet', 'error');
+                        }
+                    } catch (error) {
+                        showToast('Erreur lors de la connexion au projet', 'error');
                     }
-                } catch (error) {
-                    showNotification('Erreur lors de la connexion au projet', 'error');
-                }
+                });
             });
-        });
-
-        // Notification system
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 px-4 py-2 rounded-lg text-white z-50 transition-all duration-300 ${
-                type === 'success' ? 'bg-emerald-600' : 
-                type === 'error' ? 'bg-rose-600' : 'bg-indigo-600'
-            }`;
-            notification.textContent = message;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.style.opacity = '0';
-                setTimeout(() => notification.remove(), 300);
-            }, 3000);
         }
 
+        // Delete Confirmation Modal
+        let deleteCallback = null;
+        
+        function showDeleteConfirm(title, message, onConfirm) {
+            document.getElementById('deleteTitle').textContent = title;
+            document.getElementById('deleteMessage').textContent = message;
+            deleteCallback = onConfirm;
+            
+            const modal = document.getElementById('deleteModal');
+            modal.classList.remove('hidden');
+            
+            // Animation
+            setTimeout(() => {
+                modal.querySelector('.transform').classList.remove('scale-95');
+                modal.querySelector('.transform').classList.add('scale-100');
+            }, 10);
+        }
+        
+        function hideDeleteModal() {
+            const modal = document.getElementById('deleteModal');
+            modal.querySelector('.transform').classList.add('scale-95');
+            modal.querySelector('.transform').classList.remove('scale-100');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                deleteCallback = null;
+            }, 200);
+        }
+        
+        // Confirm Delete Helper
+        function confirmDelete(elementId, title = 'Supprimer cet élément ?', message = 'Cette action ne peut pas être annulée.') {
+            return new Promise((resolve) => {
+                showDeleteConfirm(title, message, () => {
+                    resolve(true);
+                });
+                
+                // Override cancel to resolve false
+                const cancelBtn = document.getElementById('deleteCancelBtn');
+                const originalCancel = cancelBtn.onclick;
+                cancelBtn.onclick = () => {
+                    resolve(false);
+                    hideDeleteModal();
+                };
+            });
+        }
+        
+        // Delete modal event listeners
+        document.getElementById('deleteCancelBtn').addEventListener('click', hideDeleteModal);
+        document.getElementById('deleteConfirmBtn').addEventListener('click', function() {
+            if (deleteCallback) {
+                deleteCallback();
+            }
+            hideDeleteModal();
+        });
+        
+        // Close delete modal on backdrop click
+        document.getElementById('deleteModal').addEventListener('click', function(e) {
+            if (e.target === this) hideDeleteModal();
+        });
+        
+        // Toast Notification System
+        function showToast(message, type = 'success', duration = 4000) {
+            const toast = document.createElement('div');
+            const isSuccess = type === 'success';
+            
+            toast.className = `
+                flex items-center p-4 rounded-lg shadow-lg border transform translate-x-full transition-all duration-300
+                ${isSuccess 
+                    ? 'bg-white dark:bg-slate-800 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200' 
+                    : 'bg-white dark:bg-slate-800 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200'
+                }
+            `;
+            
+            toast.innerHTML = `
+                <div class="flex-shrink-0 mr-3">
+                    <i class="fa-solid ${
+                        isSuccess ? 'fa-check-circle text-emerald-500' : 'fa-times-circle text-rose-500'
+                    } text-lg"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium">${message}</p>
+                </div>
+                <button onclick="this.parentElement.remove()" class="ml-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                    <i class="fa-solid fa-times text-sm"></i>
+                </button>
+            `;
+            
+            document.getElementById('toastContainer').appendChild(toast);
+            
+            // Slide in animation
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full');
+                toast.classList.add('translate-x-0');
+            }, 10);
+            
+            // Auto remove
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+        
         // Modal functionality
         function showModal(content) {
             document.getElementById('modalContent').innerHTML = content;
@@ -292,5 +444,55 @@
     </script>
 
     {% block scripts %}{% endblock %}
+    
+    <script>
+        // Member Info Modal Functions
+        function showMemberInfo(element) {
+            const username = element.getAttribute('data-username');
+            const email = element.getAttribute('data-email');
+            const phone = element.getAttribute('data-phone');
+            
+            const usernameEl = document.getElementById('memberUsername');
+            const emailEl = document.getElementById('memberEmail');
+            const phoneEl = document.getElementById('memberPhone');
+            const initialsEl = document.getElementById('memberInitials');
+            const modal = document.getElementById('memberModal');
+            
+            if (usernameEl && emailEl && phoneEl && initialsEl && modal) {
+                usernameEl.textContent = username;
+                emailEl.textContent = email;
+                phoneEl.textContent = 'Téléphone: ' + phone;
+                
+                // Generate initials
+                const words = username.trim().split(' ');
+                let initials = 'U';
+                if (words.length >= 2) {
+                    initials = (words[0][0] + words[words.length - 1][0]).toUpperCase();
+                } else if (words.length === 1 && words[0].length >= 2) {
+                    initials = words[0].substring(0, 2).toUpperCase();
+                } else if (words.length === 1) {
+                    initials = words[0][0].toUpperCase();
+                }
+                initialsEl.textContent = initials;
+                
+                modal.classList.remove('hidden');
+            }
+        }
+        
+        function hideMemberModal() {
+            const modal = document.getElementById('memberModal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+        
+        // Close member modal on backdrop click
+        const memberModal = document.getElementById('memberModal');
+        if (memberModal) {
+            memberModal.addEventListener('click', function(e) {
+                if (e.target === this) hideMemberModal();
+            });
+        }
+    </script>
 </body>
 </html>

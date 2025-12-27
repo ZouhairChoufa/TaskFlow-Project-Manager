@@ -14,6 +14,22 @@ def create_app(config_name=None):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
     
+    # Custom Jinja2 filter for initials
+    @app.template_filter('initials')
+    def initials_filter(name):
+        """Generate initials from a name"""
+        if not name or not isinstance(name, str):
+            return 'U'
+        
+        words = name.strip().split()
+        if len(words) >= 2:
+            return (words[0][0] + words[-1][0]).upper()
+        elif len(words) == 1 and len(words[0]) >= 2:
+            return words[0][:2].upper()
+        elif len(words) == 1:
+            return words[0][0].upper()
+        return 'U'
+    
     # Make Firebase config available to templates
     @app.context_processor
     def inject_firebase_config():

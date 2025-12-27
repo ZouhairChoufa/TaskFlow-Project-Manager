@@ -1,0 +1,65 @@
+{% extends "base_fr.html" %}
+
+{% block title %}Contact Support - TaskFlow{% endblock %}
+{% block header %}Contactez l'Support{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Header Section -->
+    <div class="text-center mb-8">
+        <div class="w-20 h-20 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fa-solid fa-headset text-indigo-600 dark:text-indigo-400 text-3xl"></i>
+        </div>
+        <h1 class="text-3xl font-bold text-slate-900 dark:text-white mb-4">Contactez l'Support</h1>
+        <p class="text-slate-600 dark:text-slate-400 text-lg">Une question ou un problème ? Remplissez ce formulaire et notre équipe vous répondra rapidement.</p>
+    </div>
+
+    <!-- Contact Form -->
+    <div class="bg-white dark:bg-slate-800/50 rounded-xl p-8 shadow-lg border border-slate-200 dark:border-slate-700">
+        <form method="POST" class="space-y-6">
+            <!-- Username (Read-only) -->
+            <div>
+                <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Nom d'utilisateur</label>
+                <input type="text" name="username" value="{{ user_data.get('username', session.get('user', {}).get('email', '').split('@')[0]) }}" readonly
+                       class="w-full px-4 py-3 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-500 dark:text-slate-400 cursor-not-allowed">
+            </div>
+
+            <!-- Email (Editable) -->
+            <div>
+                <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Email <span class="text-rose-500">*</span></label>
+                <input type="email" name="email" required placeholder="votre.email@exemple.com" value="{{ user_data.get('email', session.get('user', {}).get('email', '')) }}"
+                       class="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
+            </div>
+
+            <!-- Phone (Editable) -->
+            <div>
+                <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Numéro de téléphone <span class="text-rose-500">*</span></label>
+                <input type="tel" name="phone" required placeholder="+33 1 23 45 67 89" value="{{ user_data.get('phone', '') }}"
+                       class="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
+            </div>
+
+            <!-- Message -->
+            <div>
+                <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Message <span class="text-rose-500">*</span></label>
+                <textarea name="message" required rows="6" placeholder="Décrivez votre question ou problème en détail..."
+                          class="w-full px-4 py-3 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 resize-none"></textarea>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="pt-4">
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 px-6 rounded-lg font-medium transition-all duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500/50">
+                    <i class="fa-solid fa-paper-plane mr-2"></i>Envoyer le message
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Additional Info -->
+    <div class="mt-8 text-center">
+        <p class="text-slate-500 dark:text-slate-400 text-sm">
+            <i class="fa-solid fa-clock mr-1"></i>
+            Nous répondons généralement sous 24 heures
+        </p>
+    </div>
+</div>
+{% endblock %}

@@ -18,6 +18,7 @@ class FirestoreService:
         """Create a new project"""
         data['created_at'] = datetime.utcnow()
         data['updated_at'] = datetime.utcnow()
+        data['created_by'] = current_user_id  # Track project owner
         data['members'] = [current_user_id]  # Creator is first member
         db = FirestoreService._get_db()
         doc_ref = db.collection('projects').add(data)
@@ -176,6 +177,32 @@ class FirestoreService:
         return [{'id': doc.id, **doc.to_dict()} for doc in docs]
     
     @staticmethod
+    def join_project_with_code(project_id: str, user_id: str, access_code: str) -> Dict:
+        """Join project using access code - adds user to members array"""
+        from google.cloud.firestore import ArrayUnion
+        
+        project = FirestoreService.get_project(project_id)
+        if not project:
+            return {'success': False, 'message': 'Project not found'}
+        
+        # Verify access code
+        if project.get('access_code') != access_code:
+            return {'success': False, 'message': 'Invalid access code'}
+        
+        # Check if already a member
+        if user_id in project.get('members', []):
+            return {'success': True, 'message': 'Already a member', 'already_member': True}
+        
+        # Add user to members array using arrayUnion
+        db = FirestoreService._get_db()
+        db.collection('projects').document(project_id).update({
+            'members': ArrayUnion([user_id]),
+            'updated_at': datetime.utcnow()
+        })
+        
+        return {'success': True, 'message': 'Successfully joined project'}
+    
+    @staticmethod
     def get_dashboard_stats() -> Dict:
         """Get dashboard statistics"""
         db = FirestoreService._get_db()
@@ -210,3 +237,35 @@ class FirestoreService:
             'overdue_tasks': overdue_tasks,
             'status_distribution': status_counts
         }
+    
+    @staticmethod
+    def get_users_by_ids(user_id_list: List[str]) -> List[Dict]:
+        """Get user data for a list of user IDs"""
+        if not user_id_list:
+            return []
+        
+        db = FirestoreService._get_db()
+        users_data = []
+        
+        for user_id in user_id_list:
+            user_doc = db.collection('users').document(user_id).get()
+            if user_doc.exists:
+                user_data = user_doc.to_dict()
+                users_data.append({
+                    'uid': user_id,
+                    'username': user_data.get('username', 'Utilisateur'),
+                    'email': user_data.get('email', 'Email non disponible'),
+                    'phone': user_data.get('phone', ''),
+                    'profile_image': user_data.get('profile_image', '')
+                })
+            else:
+                # Fallback for users not in users collection
+                users_data.append({
+                    'uid': user_id,
+                    'username': 'Utilisateur',
+                    'email': 'Email non disponible',
+                    'phone': '',
+                    'profile_image': ''
+                })
+        
+        return users_data
