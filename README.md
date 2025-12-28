@@ -31,6 +31,10 @@ A modern, enterprise-grade Project Management Application built with Flask and F
 - **Analytics Dashboard**: Real-time statistics with Chart.js visualizations
 - **Responsive Design**: Mobile-first approach with glassmorphism effects
 - **User Profile**: Account management and session handling
+- **French Interface**: Complete French localization with dynamic navigation
+- **Contact Support**: Built-in contact form with SMTP email integration
+- **Member Management**: Real user data integration with initials avatar system
+- **Role-Based Access**: Owner/member permissions with secure project visibility
 
 ## Tech Stack
 
@@ -41,6 +45,8 @@ A modern, enterprise-grade Project Management Application built with Flask and F
 - **Charts**: Chart.js for analytics visualization
 - **Icons**: FontAwesome 6.4.0
 - **Styling**: Glassmorphism effects with backdrop-filter
+- **Email**: SMTP integration with Gmail for contact forms
+- **Localization**: French interface with dynamic navigation system
 
 ---
 
@@ -57,7 +63,7 @@ TaskFlow/
 ├── routes/                   # Flask blueprints (modular architecture)
 │   ├── __init__.py
 │   ├── auth.py              # Authentication routes & login_required decorator
-│   ├── main.py              # Dashboard routes (protected)
+│   ├── main.py              # Dashboard & contact routes (protected)
 │   ├── projects.py          # Project management & access control
 │   └── tasks.py             # Task CRUD operations
 ├── services/                 # Business logic layer
@@ -68,11 +74,13 @@ TaskFlow/
 │   │   ├── login.html       # Login page with Firebase integration
 │   │   ├── register.html    # Registration with client-side validation
 │   │   └── profile.html     # User profile management
-│   ├── base.html            # Base layout with conditional navigation
+│   ├── base_fr.html         # French base layout with dynamic navigation
 │   ├── home.html            # Professional landing page
 │   ├── dashboard.html       # Analytics dashboard with charts
 │   ├── board.html           # Kanban board with drag & drop
-│   └── projects.html        # Projects listing with access control
+│   ├── projects.html        # Projects listing with access control
+│   ├── contact.html         # Contact support form
+│   └── project_overview.html # Project dashboard with team info
 └── static/                  # Static assets
     ├── css/
     │   └── custom.css       # Custom styles & animations
@@ -126,6 +134,10 @@ FIREBASE_PROJECT_ID=your-project-id
 FIREBASE_STORAGE_BUCKET=your-project.appspot.com
 FIREBASE_MESSAGING_SENDER_ID=your-sender-id
 FIREBASE_APP_ID=your-app-id
+
+# SMTP Configuration for Contact Form
+SMTP_EMAIL=your-gmail@gmail.com
+SMTP_PASSWORD=your-app-password
 ```
 
 ### 4. Generate Secret Key
@@ -240,6 +252,14 @@ Visit `http://localhost:5000` to access TaskFlow.
 4. **Projects** → List view with join/create options
 5. **Kanban Board** → Task management with drag & drop
 6. **Profile** → Account management and logout
+7. **Contact Support** → Built-in support form with email integration
+
+### French Interface
+
+- **Complete Localization**: All interface elements in French
+- **Dynamic Navigation**: Context-aware sidebar (global vs project-specific)
+- **Professional Styling**: Enterprise SaaS design patterns
+- **Responsive Layout**: Mobile-first French interface
 
 ### Responsive Design
 
