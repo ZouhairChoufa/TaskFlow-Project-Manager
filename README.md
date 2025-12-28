@@ -35,6 +35,10 @@ A modern, enterprise-grade Project Management Application built with Flask and F
 - **Contact Support**: Built-in contact form with SMTP email integration
 - **Member Management**: Real user data integration with initials avatar system
 - **Role-Based Access**: Owner/member permissions with secure project visibility
+- **Project Invitation System**: Email-based invitations with notification bell UI
+- **Password Toggle Feature**: Show/hide password functionality in login and register forms
+- **Professional Toast System**: Three-state notifications (success/warning/error) with smooth animations
+- **Duplicate Invitation Handling**: Graceful handling of duplicate invitations with warning notifications
 
 ## Tech Stack
 
