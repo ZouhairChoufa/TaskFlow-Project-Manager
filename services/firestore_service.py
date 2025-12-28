@@ -76,7 +76,7 @@ class FirestoreService:
     
     @staticmethod
     def get_tasks(project_id: str) -> List[Dict]:
-        """Get all tasks for a project"""
+        """Get all tasks for a project sorted by created_at descending"""
         tasks = []
         db = FirestoreService._get_db()
         docs = db.collection('tasks').where('project_id', '==', project_id).stream()
@@ -84,6 +84,9 @@ class FirestoreService:
             task = doc.to_dict()
             task['id'] = doc.id
             tasks.append(task)
+        
+        # Sort in Python since Firestore composite index is not available
+        tasks.sort(key=lambda x: x.get('created_at', datetime.min), reverse=True)
         return tasks
     
     @staticmethod

@@ -9,6 +9,16 @@ def create_task():
     """Create a new task"""
     data = request.get_json()
     
+    # Check for unique task name within project
+    project_id = data.get('project_id')
+    task_title = data.get('title', '').strip()
+    
+    if project_id and task_title:
+        existing_tasks = FirestoreService.get_tasks(project_id)
+        for task in existing_tasks:
+            if task.get('title', '').strip().lower() == task_title.lower():
+                return jsonify({'success': False, 'error': 'Le nom de la tâche doit être unique dans ce projet.'}), 400
+    
     # Convert due_date string to datetime if provided
     if data.get('due_date'):
         data['due_date'] = datetime.fromisoformat(data['due_date'].replace('Z', '+00:00'))

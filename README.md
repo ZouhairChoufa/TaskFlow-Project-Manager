@@ -39,6 +39,9 @@ A modern, enterprise-grade Project Management Application built with Flask and F
 - **Password Toggle Feature**: Show/hide password functionality in login and register forms
 - **Professional Toast System**: Three-state notifications (success/warning/error) with smooth animations
 - **Duplicate Invitation Handling**: Graceful handling of duplicate invitations with warning notifications
+- **Advanced Kanban Filtering**: Real-time task filtering by name and assignee with clear functionality
+- **Unique Task Validation**: Prevents duplicate task names within the same project
+- **Smart Task Sorting**: Tasks sorted by creation date (newest first) for better organization
 
 ## Tech Stack
 
@@ -223,6 +226,9 @@ Visit `http://localhost:5000` to access TaskFlow.
 - **Task Cards**: Priority badges, assignee info, due dates
 - **Real-time Updates**: Instant status synchronization
 - **Member Protection**: Only project members can access
+- **Advanced Filtering**: Real-time search by task name and filter by assignee
+- **Unique Task Names**: Validation prevents duplicate task names within projects
+- **Smart Sorting**: Tasks automatically sorted by creation date (newest first)
 
 ### Task Management
 
