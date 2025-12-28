@@ -80,6 +80,48 @@
                         <button id="themeToggle" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-all duration-300">
                             <i id="themeIcon" class="fa-solid fa-moon"></i>
                         </button>
+                        
+                        <!-- Notification Bell -->
+                        {% if session.get('user') %}
+                        <div class="relative">
+                            <button id="notificationBtn" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition-all duration-300 relative">
+                                <i class="fa-solid fa-bell text-lg"></i>
+                                {% if unread_count > 0 %}
+                                <span class="absolute -top-1 -right-1 bg-rose-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">{{ unread_count }}</span>
+                                {% endif %}
+                            </button>
+                            <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 z-50 max-h-96 overflow-y-auto">
+                                <div class="p-4 border-b border-slate-200 dark:border-slate-700">
+                                    <h3 class="font-semibold text-slate-900 dark:text-white">Invitations</h3>
+                                </div>
+                                {% if notifications %}
+                                    {% for invite in notifications %}
+                                    <div class="p-4 border-b border-slate-100 dark:border-slate-700 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-700/50">
+                                        <div class="flex items-start justify-between">
+                                            <div class="flex-1">
+                                                <h4 class="font-medium text-slate-900 dark:text-white">{{ invite.name }}</h4>
+                                                <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">Invitation reçue</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex space-x-2 mt-3">
+                                            <button onclick="acceptInvite('{{ invite.id }}')" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white py-1 px-3 rounded text-sm transition-colors">
+                                                <i class="fa-solid fa-check mr-1"></i>Accepter
+                                            </button>
+                                            <button onclick="declineInvite('{{ invite.id }}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white py-1 px-3 rounded text-sm transition-colors">
+                                                <i class="fa-solid fa-times mr-1"></i>Refuser
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="p-6 text-center">
+                                        <i class="fa-solid fa-bell-slash text-slate-400 dark:text-slate-500 text-2xl mb-2"></i>
+                                        <p class="text-slate-500 dark:text-slate-400">Aucune nouvelle notification</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
                         {% if session.get('user') %}
                         <!-- User Menu -->
                         <div class="relative">
@@ -249,11 +291,35 @@
             userMenuBtn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 userMenu.classList.toggle('hidden');
+                // Close notification dropdown if open
+                const notificationDropdown = document.getElementById('notificationDropdown');
+                if (notificationDropdown) {
+                    notificationDropdown.classList.add('hidden');
+                }
             });
             
             // Close menu when clicking outside
             document.addEventListener('click', function() {
                 userMenu.classList.add('hidden');
+            });
+        }
+
+        // Notification bell toggle
+        const notificationBtn = document.getElementById('notificationBtn');
+        const notificationDropdown = document.getElementById('notificationDropdown');
+        if (notificationBtn && notificationDropdown) {
+            notificationBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                notificationDropdown.classList.toggle('hidden');
+                // Close user menu if open
+                if (userMenu) {
+                    userMenu.classList.add('hidden');
+                }
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function() {
+                notificationDropdown.classList.add('hidden');
             });
         }
 
@@ -376,21 +442,38 @@
         // Toast Notification System
         function showToast(message, type = 'success', duration = 4000) {
             const toast = document.createElement('div');
-            const isSuccess = type === 'success';
+            let bgClass, borderClass, textClass, iconClass;
+            
+            switch(type) {
+                case 'success':
+                    bgClass = 'bg-white dark:bg-slate-800';
+                    borderClass = 'border-emerald-200 dark:border-emerald-800';
+                    textClass = 'text-emerald-800 dark:text-emerald-200';
+                    iconClass = 'fa-check-circle text-emerald-500';
+                    break;
+                case 'warning':
+                    bgClass = 'bg-white dark:bg-slate-800';
+                    borderClass = 'border-amber-200 dark:border-amber-800';
+                    textClass = 'text-amber-800 dark:text-amber-200';
+                    iconClass = 'fa-exclamation-triangle text-amber-500';
+                    break;
+                case 'error':
+                default:
+                    bgClass = 'bg-white dark:bg-slate-800';
+                    borderClass = 'border-rose-200 dark:border-rose-800';
+                    textClass = 'text-rose-800 dark:text-rose-200';
+                    iconClass = 'fa-times-circle text-rose-500';
+                    break;
+            }
             
             toast.className = `
                 flex items-center p-4 rounded-lg shadow-lg border transform translate-x-full transition-all duration-300
-                ${isSuccess 
-                    ? 'bg-white dark:bg-slate-800 border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-200' 
-                    : 'bg-white dark:bg-slate-800 border-rose-200 dark:border-rose-800 text-rose-800 dark:text-rose-200'
-                }
+                ${bgClass} ${borderClass} ${textClass}
             `;
             
             toast.innerHTML = `
                 <div class="flex-shrink-0 mr-3">
-                    <i class="fa-solid ${
-                        isSuccess ? 'fa-check-circle text-emerald-500' : 'fa-times-circle text-rose-500'
-                    } text-lg"></i>
+                    <i class="fa-solid ${iconClass} text-lg"></i>
                 </div>
                 <div class="flex-1">
                     <p class="text-sm font-medium">${message}</p>
@@ -440,6 +523,46 @@
                 ...options
             });
             return response.json();
+        }
+        
+        // Accept invitation function
+        async function acceptInvite(projectId) {
+            try {
+                const result = await apiCall(`/projects/accept_invite/${projectId}`, {
+                    method: 'POST'
+                });
+                
+                if (result.success) {
+                    showToast('Invitation acceptée !', 'success');
+                    if (result.redirect) {
+                        setTimeout(() => window.location.href = result.redirect, 1000);
+                    } else {
+                        setTimeout(() => location.reload(), 1000);
+                    }
+                } else {
+                    showToast(result.error || 'Erreur lors de l\'acceptation', 'error');
+                }
+            } catch (error) {
+                showToast('Erreur lors de l\'acceptation de l\'invitation', 'error');
+            }
+        }
+        
+        // Decline invitation function
+        async function declineInvite(projectId) {
+            try {
+                const result = await apiCall(`/projects/decline_invite/${projectId}`, {
+                    method: 'POST'
+                });
+                
+                if (result.success) {
+                    showToast('Invitation refusée', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showToast(result.error || 'Erreur lors du refus', 'error');
+                }
+            } catch (error) {
+                showToast('Erreur lors du refus de l\'invitation', 'error');
+            }
         }
     </script>
 

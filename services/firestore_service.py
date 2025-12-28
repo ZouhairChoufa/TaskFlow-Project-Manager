@@ -269,3 +269,55 @@ class FirestoreService:
                 })
         
         return users_data
+    
+    @staticmethod
+    def find_user_by_email(email: str) -> Optional[Dict]:
+        """Find user by email address"""
+        db = FirestoreService._get_db()
+        docs = db.collection('users').where('email', '==', email).limit(1).stream()
+        for doc in docs:
+            user_data = doc.to_dict()
+            user_data['uid'] = doc.id
+            return user_data
+        return None
+    
+    @staticmethod
+    def add_pending_invite(project_id: str, user_id: str) -> bool:
+        """Add user to project pending invites"""
+        from google.cloud.firestore import ArrayUnion
+        db = FirestoreService._get_db()
+        db.collection('projects').document(project_id).update({
+            'pending_invites': ArrayUnion([user_id]),
+            'updated_at': datetime.utcnow()
+        })
+        return True
+    
+    @staticmethod
+    def accept_invitation(project_id: str, user_id: str) -> bool:
+        """Accept invitation - move from pending to members"""
+        from google.cloud.firestore import ArrayUnion, ArrayRemove
+        db = FirestoreService._get_db()
+        db.collection('projects').document(project_id).update({
+            'pending_invites': ArrayRemove([user_id]),
+            'members': ArrayUnion([user_id]),
+            'updated_at': datetime.utcnow()
+        })
+        return True
+    
+    @staticmethod
+    def decline_invitation(project_id: str, user_id: str) -> bool:
+        """Decline invitation - remove from pending invites"""
+        from google.cloud.firestore import ArrayRemove
+        db = FirestoreService._get_db()
+        db.collection('projects').document(project_id).update({
+            'pending_invites': ArrayRemove([user_id]),
+            'updated_at': datetime.utcnow()
+        })
+        return True
+    
+    @staticmethod
+    def get_user_pending_invites(user_id: str) -> List[Dict]:
+        """Get projects where user has pending invites"""
+        db = FirestoreService._get_db()
+        docs = db.collection('projects').where('pending_invites', 'array_contains', user_id).stream()
+        return [{'id': doc.id, **doc.to_dict()} for doc in docs]

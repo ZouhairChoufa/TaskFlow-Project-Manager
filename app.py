@@ -44,6 +44,26 @@ def create_app(config_name=None):
             }
         }
     
+    # Global notification context processor
+    @app.context_processor
+    def inject_notifications():
+        """Inject pending invitations into all templates"""
+        if not session.get('user'):
+            return {'notifications': [], 'unread_count': 0}
+        
+        current_user_id = session.get('user', {}).get('uid')
+        if not current_user_id:
+            return {'notifications': [], 'unread_count': 0}
+        
+        try:
+            from services.firestore_service import FirestoreService
+            notifications = FirestoreService.get_user_pending_invites(current_user_id)
+            unread_count = len(notifications)
+            return {'notifications': notifications, 'unread_count': unread_count}
+        except Exception as e:
+            print(f"Error fetching notifications: {e}")
+            return {'notifications': [], 'unread_count': 0}
+    
     # Home route
     @app.route('/')
     def home():

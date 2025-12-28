@@ -350,35 +350,140 @@ def project_calendar(project_id):
                          current_year=year,
                          current_month_index=month)
     
-@projects_bp.route('/<project_id>/invite', methods=['POST'])
+@projects_bp.route('/<project_id>/invite_member', methods=['POST'])
 @login_required
-def invite_member(project_id):
-    """Inviter un membre par email"""
-    from flask import session
+def invite_member_by_email(project_id):
+    """Invite a member by email"""
+    from flask import session, flash
     data = request.get_json()
-    email = data.get('email', '').strip().lower()
+    print(f"DEBUG: Received data: {data}")  # Debug line
+    
+    email = data.get('email', '').strip().lower() if data else ''
+    print(f"DEBUG: Email after processing: '{email}'")  # Debug line
     
     if not email:
-        return jsonify({'error': 'Email requis'}), 400
+        print("DEBUG: Email validation failed")
+        return jsonify({'success': False, 'error': 'Email requis'}), 400
     
     project = FirestoreService.get_project(project_id)
     if not project:
-        return jsonify({'error': 'Projet non trouvé'}), 404
+        return jsonify({'success': False, 'error': 'Projet non trouvé'}), 404
     
     current_user_id = session.get('user', {}).get('uid')
     if not current_user_id:
-        return jsonify({'error': 'Non authentifié'}), 401
+        return jsonify({'success': False, 'error': 'Non authentifié'}), 401
     
-    # Check if user is a member of the project
+    # Check if user is owner or member
     is_owner = project.get('created_by') == current_user_id
     is_member = current_user_id in project.get('members', [])
     
     if not (is_owner or is_member):
-        return jsonify({'error': 'Accès refusé'}), 403
+        return jsonify({'success': False, 'error': 'Accès refusé'}), 403
     
-    # Add email to project invitations
-    FirestoreService.add_invitation_to_project(project_id, email)
-    return jsonify({'success': True, 'message': f'Invitation envoyée à {email}'})
+    # Find user by email
+    user = FirestoreService.find_user_by_email(email)
+    if not user:
+        return jsonify({'success': False, 'error': 'Utilisateur non trouvé avec cet email'}), 404
+    
+    user_id = user.get('uid')
+    
+    # Check if already a member
+    if user_id in project.get('members', []):
+        return jsonify({'success': False, 'error': 'Cet utilisateur est déjà membre du projet', 'category': 'warning'}), 200
+    
+    # Check if already has pending invite
+    if user_id in project.get('pending_invites', []):
+        return jsonify({'success': False, 'error': 'Une invitation est déjà en attente pour cet utilisateur', 'category': 'warning'}), 200
+    
+    # Add to pending invites
+    FirestoreService.add_pending_invite(project_id, user_id)
+    
+    # Send email notification
+    try:
+        send_invitation_email(email, project.get('name'), project_id)
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+    
+    return jsonify({'success': True, 'message': 'Invitation envoyée avec succès'})
+
+@projects_bp.route('/accept_invite/<project_id>', methods=['POST'])
+@login_required
+def accept_invite(project_id):
+    """Accept project invitation"""
+    from flask import session, flash, redirect, url_for
+    current_user_id = session.get('user', {}).get('uid')
+    
+    if not current_user_id:
+        return jsonify({'success': False, 'error': 'Non authentifié'}), 401
+    
+    project = FirestoreService.get_project(project_id)
+    if not project:
+        return jsonify({'success': False, 'error': 'Projet non trouvé'}), 404
+    
+    # Check if user has pending invite
+    if current_user_id not in project.get('pending_invites', []):
+        return jsonify({'success': False, 'error': 'Aucune invitation en attente'}), 400
+    
+    # Move from pending_invites to members
+    FirestoreService.accept_invitation(project_id, current_user_id)
+    
+    flash('Bienvenue dans le projet !', 'success')
+    return jsonify({'success': True, 'redirect': url_for('projects.project_overview', project_id=project_id)})
+
+@projects_bp.route('/decline_invite/<project_id>', methods=['POST'])
+@login_required
+def decline_invite(project_id):
+    """Decline project invitation"""
+    from flask import session
+    current_user_id = session.get('user', {}).get('uid')
+    
+    if not current_user_id:
+        return jsonify({'success': False, 'error': 'Non authentifié'}), 401
+    
+    project = FirestoreService.get_project(project_id)
+    if not project:
+        return jsonify({'success': False, 'error': 'Projet non trouvé'}), 404
+    
+    # Remove from pending invites
+    FirestoreService.decline_invitation(project_id, current_user_id)
+    
+    return jsonify({'success': True, 'message': 'Invitation refusée'})
+
+def send_invitation_email(email, project_name, project_id):
+    """Send invitation email"""
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+    import os
+    
+    smtp_server = "smtp.gmail.com"
+    smtp_port = 587
+    sender_email = os.environ.get('SMTP_EMAIL')
+    sender_password = os.environ.get('SMTP_PASSWORD')
+    
+    if not sender_email or not sender_password:
+        raise Exception("SMTP credentials not configured")
+    
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = email
+    msg['Subject'] = f"Invitation au projet {project_name} - TaskFlow"
+    
+    body = f"""
+    Vous avez été invité à rejoindre le projet "{project_name}" sur TaskFlow.
+    
+    Connectez-vous à votre compte TaskFlow pour accepter ou refuser cette invitation.
+    
+    ---
+    TaskFlow - Gestion de Projets
+    """
+    
+    msg.attach(MIMEText(body, 'plain'))
+    
+    with smtplib.SMTP(smtp_server, smtp_port) as server:
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.send_message(msg)
 @projects_bp.route('/join_project/<project_id>', methods=['POST'])
 @login_required
 def join_project_route(project_id):
