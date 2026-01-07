@@ -1,137 +1,170 @@
 {% extends "base_fr.html" %}
 
-{% block title %}Projects - TaskFlow{% endblock %}
-{% block header %}Projects{% endblock %}
+{% block title %}Projets - TaskFlow{% endblock %}
+{% block header %}Mes Projets{% endblock %}
+
+{% block create_btn %}
+{% endblock %}
 
 {% block content %}
-<!-- Projects Grid -->
+<div class="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+    <div>
+        <h2 class="text-2xl font-bold text-slate-800 dark:text-white">Tous les projets</h2>
+        <p class="text-slate-500 dark:text-slate-400 text-sm">Gérez et suivez vos projets en cours.</p>
+    </div>
+    
+    <button id="createBtnMain" class="bg-brand-600 hover:bg-brand-700 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-brand-500/20 transition-all hover:-translate-y-0.5 flex items-center gap-2">
+        <i class="fa-solid fa-folder-plus"></i>
+        <span>Nouveau Projet</span>
+    </button>
+</div>
+
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    
+    <button onclick="document.getElementById('createBtnMain').click()" 
+            class="group flex flex-col items-center justify-center h-full min-h-[200px] bg-slate-50/50 dark:bg-slate-800/30 border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-2xl hover:border-brand-500 dark:hover:border-brand-500 hover:bg-brand-50/50 dark:hover:bg-brand-900/10 transition-all duration-300 cursor-pointer">
+        <div class="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center mb-3 group-hover:bg-brand-100 group-hover:text-brand-600 transition-colors">
+            <i class="fa-solid fa-plus text-xl text-slate-400 dark:text-slate-500 group-hover:text-brand-600"></i>
+        </div>
+        <span class="font-bold text-slate-500 dark:text-slate-400 group-hover:text-brand-600 transition-colors">Créer un projet</span>
+    </button>
+
     {% for project in projects %}
     {% set current_user_id = session.get('user', {}).get('uid') %}
     {% set is_owner = project.get('created_by') == current_user_id %}
     {% set is_member = current_user_id in project.get('members', []) %}
-    <div class="bg-white dark:bg-slate-800/50 rounded-xl p-6 hover:scale-105 transition-all duration-300 group shadow-lg border border-slate-200 dark:border-slate-700">
-        <div class="flex items-start justify-between mb-4">
-            <div class="flex-1">
-                <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">{{ project.name }}</h3>
-                <p class="text-slate-600 dark:text-slate-400 text-sm">{{ project.description }}</p>
+    
+    <div class="group bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 hover:-translate-y-1 transition-all duration-300 shadow-lg border border-white/20 dark:border-slate-700/50 flex flex-col h-full relative overflow-hidden">
+        
+        <div class="absolute -top-10 -right-10 w-32 h-32 bg-brand-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-brand-500/20 transition-colors"></div>
+
+        <div class="flex items-start justify-between mb-4 relative z-10">
+            <div class="flex-1 pr-4">
+                <div class="flex items-center gap-2 mb-2">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white line-clamp-1">{{ project.name }}</h3>
+                    {% if not (is_owner or is_member) %}
+                        <i class="fa-solid fa-lock text-amber-500 text-xs" title="Projet Privé"></i>
+                    {% endif %}
+                </div>
+                <p class="text-sm text-slate-500 dark:text-slate-400 line-clamp-2 h-10">{{ project.description or 'Aucune description disponible.' }}</p>
             </div>
+            
             {% if is_owner %}
-            <div class="opacity-0 group-hover:opacity-100 transition-opacity">
+            <div class="opacity-0 group-hover:opacity-100 transition-opacity absolute top-0 right-0">
                 <button onclick="deleteProject('{{ project.id }}')" 
-                        class="text-rose-500 dark:text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 p-1">
-                    <i class="fa-solid fa-trash text-sm"></i>
+                        class="p-2 rounded-lg bg-rose-50 dark:bg-rose-900/20 text-rose-500 hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors"
+                        title="Supprimer le projet">
+                    <i class="fa-solid fa-trash-can"></i>
                 </button>
             </div>
             {% endif %}
         </div>
         
-        {% if project.deadline %}
-        <div class="flex items-center text-slate-600 dark:text-slate-400 text-sm mb-4">
-            <i class="fa-solid fa-calendar mr-2"></i>
-            Due: {{ project.deadline.strftime('%Y-%m-%d') }}
-        </div>
-        {% endif %}
-        
-        <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-                <span class="text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-1 rounded-full">
-                    {{ project.created_at.strftime('%m/%d/%Y') if project.created_at else 'Recently' }}
-                </span>
+        <div class="mt-auto space-y-4 relative z-10">
+            {% if project.deadline %}
+            <div class="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-700/50 p-2 rounded-lg w-fit">
+                <i class="fa-regular fa-calendar text-brand-500"></i>
+                <span>Échéance : {{ project.deadline.strftime('%d/%m/%Y') }}</span>
+            </div>
+            {% endif %}
+            
+            <div class="border-t border-slate-100 dark:border-slate-700/50 pt-4 flex items-center justify-between">
+                
+                <div class="flex items-center">
+                    {% if is_owner %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400">
+                        <i class="fa-solid fa-crown text-[10px]"></i> Propriétaire
+                    </span>
+                    {% elif is_member %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-brand-50 text-brand-700 border border-brand-100 dark:bg-brand-900/20 dark:border-brand-800 dark:text-brand-400">
+                        <i class="fa-solid fa-user-check text-[10px]"></i> Membre
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-50 text-amber-700 border border-amber-100 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400">
+                        <i class="fa-solid fa-lock text-[10px]"></i> Privé
+                    </span>
+                    {% endif %}
+                </div>
+
                 {% if is_owner %}
-                <span class="text-xs bg-emerald-100 dark:bg-emerald-900 text-emerald-700 dark:text-emerald-300 px-2 py-1 rounded-full">
-                    <i class="fa-solid fa-crown mr-1"></i>Propriétaire
-                </span>
+                <a href="{{ url_for('projects.view_project', project_id=project.id) }}" 
+                   class="bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2 rounded-lg text-sm font-bold hover:opacity-90 transition-opacity shadow-lg shadow-slate-500/20 flex items-center gap-2">
+                    <i class="fa-solid fa-gear"></i> Gérer
+                </a>
                 {% elif is_member %}
-                <span class="text-xs bg-teal-100 dark:bg-teal-900 text-teal-700 dark:text-teal-300 px-2 py-1 rounded-full">
-                    <i class="fa-solid fa-check-circle mr-1"></i>Membre
-                </span>
+                <a href="{{ url_for('projects.view_project', project_id=project.id) }}" 
+                   class="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-lg shadow-brand-500/20 flex items-center gap-2">
+                    <span>Ouvrir</span> <i class="fa-solid fa-arrow-right"></i>
+                </a>
                 {% else %}
-                <span class="text-xs bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 px-2 py-1 rounded-full">
-                    <i class="fa-solid fa-lock mr-1"></i>Privé
-                </span>
+                <button onclick="openJoinModal('{{ project.id }}', '{{ project.name }}')" 
+                        class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors shadow-lg shadow-amber-500/20 flex items-center gap-2">
+                    <i class="fa-solid fa-unlock"></i> Rejoindre
+                </button>
                 {% endif %}
             </div>
-            {% if is_owner %}
-            <a href="{{ url_for('projects.view_project', project_id=project.id) }}" 
-               class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm transition-all duration-300 hover:scale-105">
-                <i class="fa-solid fa-cog mr-1"></i>Gérer
-            </a>
-            {% elif is_member %}
-            <a href="{{ url_for('projects.view_project', project_id=project.id) }}" 
-               class="bg-slate-600 hover:bg-slate-700 text-white px-4 py-2 rounded-lg text-sm transition-all duration-300 hover:scale-105">
-                <i class="fa-solid fa-arrow-right mr-1"></i>Ouvrir
-            </a>
-            {% else %}
-            <button onclick="openJoinModal('{{ project.id }}', '{{ project.name }}')" 
-                    class="bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg text-sm transition-all duration-300 hover:scale-105">
-                <i class="fa-solid fa-unlock mr-1"></i>Rejoindre
-            </button>
-            {% endif %}
         </div>
     </div>
     {% endfor %}
-    
-    {% if not projects %}
-    <div class="col-span-full text-center py-12">
-        <div class="bg-white dark:bg-slate-800/30 rounded-xl p-8 shadow-lg border border-slate-200 dark:border-slate-700">
-            <i class="fa-solid fa-folder-open text-4xl text-slate-400 dark:text-slate-500 mb-4"></i>
-            <h3 class="text-xl font-semibold text-slate-700 dark:text-slate-300 mb-2">No Projects Yet</h3>
-            <p class="text-slate-600 dark:text-slate-400 mb-6">Create your first project to get started with TaskFlow</p>
-            <button onclick="document.getElementById('createBtn').click()" 
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg transition-all duration-300 hover:scale-105">
-                <i class="fa-solid fa-plus mr-2"></i>Create Your First Project
-            </button>
-        </div>
-    </div>
-    {% endif %}
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Create Project Modal
-    document.getElementById('createBtn').addEventListener('click', function() {
+    // --- Create Project Modal ---
+    // Only attach to the Main button since we removed the Header button
+    const btnMain = document.getElementById('createBtnMain');
+    
+    function openCreateProjectModal() {
         showModal(`
-            <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-4">Créer un Nouveau Projet</h3>
-            <form id="projectForm">
-                <div class="space-y-4">
+            <div class="text-left">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-brand-100 dark:bg-brand-900/30 text-brand-600 flex items-center justify-center">
+                        <i class="fa-solid fa-folder-plus"></i>
+                    </div>
+                    Nouveau Projet
+                </h3>
+                <form id="projectForm" class="space-y-5">
                     <div>
-                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Nom du Projet</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nom du Projet</label>
                         <input type="text" name="name" required 
-                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                               class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                               placeholder="Ex: Refonte Site Web">
                     </div>
                     <div>
-                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Description</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description</label>
                         <textarea name="description" rows="3"
-                                  class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"></textarea>
+                                  class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all resize-none"></textarea>
                     </div>
-                    <div>
-                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Code d'Accès (Mot de passe)</label>
-                        <div class="flex space-x-2">
-                            <input type="text" name="access_code" id="accessCodeInput" required placeholder="Ex: Team2025"
-                                   class="flex-1 px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
-                            <button type="button" onclick="generateRandomCode()" class="px-3 py-2 bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-500 transition-colors">
-                                <i class="fa-solid fa-dice"></i>
-                            </button>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Code d'accès</label>
+                            <div class="flex gap-2">
+                                <input type="text" name="access_code" id="accessCodeInput" required placeholder="Ex: TEAM24"
+                                       class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none transition-all font-mono">
+                                <button type="button" onclick="generateRandomCode()" class="px-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-xl transition-colors">
+                                    <i class="fa-solid fa-shuffle text-slate-500"></i>
+                                </button>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1">Pour inviter vos collègues.</p>
                         </div>
-                        <p class="text-slate-500 dark:text-slate-400 text-xs mt-1">Partagez ce code avec votre équipe pour qu'elle puisse rejoindre le projet</p>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Date limite</label>
+                            <input type="date" name="deadline"
+                                   class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none transition-all">
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Échéance (Optionnel)</label>
-                        <input type="date" name="deadline"
-                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
-                    </div>
-                    <div class="flex space-x-3 pt-4">
-                        <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors">
-                            Créer le Projet
-                        </button>
-                        <button type="button" onclick="hideModal()" class="flex-1 bg-slate-500 dark:bg-slate-600 hover:bg-slate-600 dark:hover:bg-slate-700 text-white py-2 rounded-lg transition-colors">
+                    
+                    <div class="flex gap-3 pt-4">
+                        <button type="button" onclick="hideModal()" class="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
                             Annuler
                         </button>
+                        <button type="submit" class="flex-1 px-4 py-3 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5">
+                            Créer
+                        </button>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         `);
 
         document.getElementById('projectForm').addEventListener('submit', async function(e) {
@@ -156,41 +189,49 @@
                 showToast('Erreur lors de la création du projet', 'error');
             }
         });
-    });
+    }
+
+    if (btnMain) btnMain.addEventListener('click', openCreateProjectModal);
     
     // Generate random access code
     function generateRandomCode() {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
         let result = '';
-        for (let i = 0; i < 8; i++) {
+        for (let i = 0; i < 6; i++) {
             result += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         document.getElementById('accessCodeInput').value = result;
     }
 
-    // Project Join Modal - ID-based password verification
+    // Join Project Modal
     function openJoinModal(projectId, projectName) {
         showModal(`
-            <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-4">Rejoindre le Projet</h3>
-            <p class="text-slate-600 dark:text-slate-400 mb-4">"${projectName.replace(/"/g, '&quot;').replace(/'/g, '&#39;')}" est privé. Entrez le code d'accès pour le rejoindre.</p>
-            <form id="projectJoinForm">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Code d'Accès</label>
-                        <input type="password" name="access_code" required placeholder="Entrez le code d'accès"
-                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
-                        <div id="joinError" class="text-rose-600 text-sm mt-1 hidden"></div>
+            <div class="text-left">
+                <div class="mb-6 text-center">
+                    <div class="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-3 text-amber-600">
+                        <i class="fa-solid fa-lock text-xl"></i>
                     </div>
-                    <div class="flex space-x-3 pt-4">
-                        <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors">
-                            <i class="fa-solid fa-unlock mr-2"></i>Rejoindre
-                        </button>
-                        <button type="button" onclick="hideModal()" class="flex-1 bg-slate-500 dark:bg-slate-600 hover:bg-slate-600 dark:hover:bg-slate-700 text-white py-2 rounded-lg transition-colors">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">Projet Privé</h3>
+                    <p class="text-sm text-slate-500 mt-1">Entrez le code pour rejoindre <strong>"${projectName.replace(/"/g, '&quot;')}"</strong></p>
+                </div>
+                
+                <form id="projectJoinForm" class="space-y-5">
+                    <div>
+                        <input type="password" name="access_code" required placeholder="Entrez le code d'accès..."
+                               class="w-full px-4 py-3 text-center text-lg tracking-widest bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all font-mono">
+                        <div id="joinError" class="text-rose-500 text-xs text-center mt-2 font-bold hidden"></div>
+                    </div>
+                    
+                    <div class="flex gap-3 pt-2">
+                        <button type="button" onclick="hideModal()" class="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 transition-colors">
                             Annuler
                         </button>
+                        <button type="submit" class="flex-1 px-4 py-3 bg-amber-600 text-white font-bold rounded-xl hover:bg-amber-700 shadow-lg shadow-amber-500/30 transition-all hover:-translate-y-0.5">
+                            Déverrouiller
+                        </button>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         `);
 
         document.getElementById('projectJoinForm').addEventListener('submit', async function(e) {
@@ -216,6 +257,9 @@
                 } else {
                     errorDiv.textContent = result.message || 'Code incorrect';
                     errorDiv.classList.remove('hidden');
+                    const input = this.querySelector('input');
+                    input.classList.add('border-rose-500', 'animate-pulse');
+                    setTimeout(() => input.classList.remove('border-rose-500', 'animate-pulse'), 500);
                 }
             } catch (error) {
                 errorDiv.textContent = 'Erreur lors de la connexion au projet';
@@ -224,11 +268,13 @@
         });
     }
 
-    // Delete Project with custom confirmation
+    // Delete Project
     async function deleteProject(projectId) {
+        if(window.event) window.event.stopPropagation();
+
         const confirmed = await confirmDelete(null, 
             'Supprimer ce projet ?', 
-            'Toutes les tâches et données du projet seront définitivement supprimées.');
+            'Attention : Toutes les tâches, fichiers et données associés seront définitivement perdus. Cette action est irréversible.');
         
         if (confirmed) {
             try {
@@ -237,13 +283,13 @@
                 });
                 
                 if (result.success) {
-                    showToast('Projet supprimé avec succès', 'success');
+                    showToast('Projet supprimé', 'success');
                     setTimeout(() => location.reload(), 1000);
                 } else {
                     showToast('Erreur lors de la suppression', 'error');
                 }
             } catch (error) {
-                showToast('Erreur lors de la suppression', 'error');
+                showToast('Erreur serveur', 'error');
             }
         }
     }

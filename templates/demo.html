@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Démonstration & Guide - TaskFlow</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa', 100: '#ccfbf1', 200: '#99f6e4', 300: '#5eead4',
+                            400: '#2dd4bf', 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e',
+                            800: '#115e59', 900: '#134e4a',
+                        }
+                    },
+                    animation: {
+                        'blob': 'blob 10s infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' }
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { scroll-behavior: smooth; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 relative overflow-x-hidden">
+
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-teal-300/30 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob"></div>
+        <div class="absolute top-0 right-1/4 w-96 h-96 bg-emerald-300/30 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div class="absolute -bottom-32 left-1/3 w-96 h-96 bg-cyan-300/30 rounded-full mix-blend-multiply filter blur-3xl opacity-70 animate-blob animation-delay-4000"></div>
+    </div>
+
+    <nav class="fixed w-full z-50 top-0 start-0 border-b border-white/20 bg-white/70 backdrop-blur-xl">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between p-4">
+            <a href="{{ url_for('home') }}" class="flex items-center gap-3 group">
+                <div class="w-10 h-10 bg-gradient-to-br from-[#14B8A6] to-[#0F766E] rounded-xl flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:scale-105 transition-transform duration-300">
+                    <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" class="text-white w-6 h-6">
+                        <path d="M20 20 H80 M50 20 V90" />
+                        <path d="M50 55 H85 L70 40 M70 70 L85 55" /> 
+                    </svg>
+                </div>
+                <span class="self-center text-xl font-bold whitespace-nowrap text-slate-900 tracking-tight">TaskFlow</span>
+            </a>
+            <div class="flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
+                <a href="{{ url_for('auth.register') }}" class="text-white bg-brand-600 hover:bg-brand-700 focus:ring-4 focus:outline-none focus:ring-brand-300 font-bold rounded-xl text-sm px-6 py-3 text-center transition-all shadow-lg shadow-brand-500/30 hover:-translate-y-0.5">
+                    Commencer
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex max-w-7xl mx-auto pt-28 pb-12 px-4 relative z-10 gap-10">
+        
+        <aside class="hidden lg:block w-64 fixed h-[calc(100vh-8rem)] top-24 overflow-y-auto no-scrollbar">
+            <div class="bg-white/60 backdrop-blur-xl rounded-2xl p-6 border border-white/50 shadow-sm sticky top-0">
+                <h3 class="font-bold text-slate-900 mb-4 uppercase text-xs tracking-wider">Guide Rapide</h3>
+                <ul class="space-y-3 text-sm font-medium text-slate-600">
+                    <li><a href="#intro" class="flex items-center gap-2 hover:text-brand-600 transition-colors"><i class="fa-solid fa-star w-5"></i> Introduction</a></li>
+                    <li><a href="#dashboard" class="flex items-center gap-2 hover:text-brand-600 transition-colors"><i class="fa-solid fa-chart-line w-5"></i> Tableau de Bord</a></li>
+                    <li><a href="#projects" class="flex items-center gap-2 hover:text-brand-600 transition-colors"><i class="fa-solid fa-folder-open w-5"></i> Gestion des Projets</a></li>
+                    <li><a href="#kanban" class="flex items-center gap-2 hover:text-brand-600 transition-colors"><i class="fa-solid fa-columns w-5"></i> Tableau Kanban</a></li>
+                    <li><a href="#calendar" class="flex items-center gap-2 hover:text-brand-600 transition-colors"><i class="fa-solid fa-calendar w-5"></i> Calendrier</a></li>
+                    <li><a href="#team" class="flex items-center gap-2 hover:text-brand-600 transition-colors"><i class="fa-solid fa-users w-5"></i> Collaboration</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <main class="flex-1 lg:ml-72 space-y-16">
+            
+            <section id="intro" class="text-center py-10 animate-fade-in-up">
+                <span class="px-3 py-1 rounded-full bg-brand-100 text-brand-700 text-xs font-bold uppercase tracking-wider mb-4 inline-block border border-brand-200">Documentation v2.0</span>
+                <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 mb-6 leading-tight">
+                    Maîtrisez votre <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-emerald-500">Flux de Travail</span>
+                </h1>
+                <p class="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+                    Découvrez comment TaskFlow centralise vos projets, optimise votre temps et simplifie la collaboration en équipe. Voici tout ce que vous devez savoir pour démarrer.
+                </p>
+            </section>
+
+            <section id="dashboard" class="bg-white/70 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/50 hover:border-brand-200 transition-colors duration-300">
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+                            <i class="fa-solid fa-chart-pie text-2xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-900 mb-4">Un Tableau de Bord Intelligent</h2>
+                        <p class="text-slate-600 mb-4 leading-relaxed">
+                            Dès votre connexion, obtenez une vue d'aigle sur votre productivité. Visualisez vos tâches en retard, votre progression globale et vos projets récents.
+                        </p>
+                        <ul class="space-y-3 text-sm text-slate-500">
+                            <li class="flex items-center gap-3"><i class="fa-solid fa-check-circle text-brand-500 text-lg"></i> Statistiques en temps réel (Tâches, Retards).</li>
+                            <li class="flex items-center gap-3"><i class="fa-solid fa-check-circle text-brand-500 text-lg"></i> Graphique de répartition des tâches.</li>
+                            <li class="flex items-center gap-3"><i class="fa-solid fa-check-circle text-brand-500 text-lg"></i> Accès rapide à vos projets récents.</li>
+                        </ul>
+                    </div>
+                    <div class="relative bg-slate-100 rounded-2xl p-4 border border-slate-200 shadow-inner transform rotate-1 hover:rotate-0 transition-transform duration-500">
+                        <div class="flex gap-3 mb-3">
+                            <div class="h-24 w-1/3 bg-white rounded-xl shadow-sm border border-slate-100"></div>
+                            <div class="h-24 w-1/3 bg-white rounded-xl shadow-sm border border-slate-100"></div>
+                            <div class="h-24 w-1/3 bg-white rounded-xl shadow-sm border border-slate-100"></div>
+                        </div>
+                        <div class="h-40 w-full bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center">
+                            <div class="w-24 h-24 rounded-full border-[12px] border-indigo-50 border-t-indigo-500"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="projects" class="bg-white/70 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/50 hover:border-brand-200 transition-colors duration-300">
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div class="order-2 md:order-1">
+                        <div class="bg-slate-100 rounded-2xl p-6 border border-slate-200 shadow-inner">
+                            <div class="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm mb-3 border-l-4 border-brand-500">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-brand-100 rounded-lg flex items-center justify-center text-brand-600"><i class="fa-solid fa-folder"></i></div>
+                                    <div class="w-32 h-3 bg-slate-200 rounded-full"></div>
+                                </div>
+                                <div class="w-20 h-6 bg-brand-600 rounded-lg opacity-20"></div>
+                            </div>
+                            <div class="flex items-center justify-between bg-white p-4 rounded-xl shadow-sm opacity-60 border-l-4 border-amber-400">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center text-amber-600"><i class="fa-solid fa-lock"></i></div>
+                                    <div class="w-24 h-3 bg-slate-200 rounded-full"></div>
+                                </div>
+                                <div class="w-8 h-8 bg-slate-200 rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="order-1 md:order-2">
+                        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+                            <i class="fa-solid fa-folder-plus text-2xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-900 mb-4">Gestion de Projets Simplifiée</h2>
+                        <p class="text-slate-600 mb-4 leading-relaxed">
+                            Créez des espaces de travail dédiés ou rejoignez ceux de votre équipe en un clic. Chaque projet est un hub centralisé.
+                        </p>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <p class="text-slate-700 text-sm font-semibold mb-1">
+                                <i class="fa-solid fa-key text-brand-500 mr-2"></i> Codes d'accès sécurisés
+                            </p>
+                            <p class="text-slate-500 text-xs">Chaque projet génère un code unique (ex: TEAM24). Partagez-le pour inviter des collègues instantanément.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="kanban" class="bg-white/70 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/50 hover:border-brand-200 transition-colors duration-300">
+                <div class="text-center max-w-2xl mx-auto mb-10">
+                    <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm">
+                        <i class="fa-solid fa-columns text-2xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-900 mb-4">Le Cœur de l'Action : Kanban</h2>
+                    <p class="text-slate-600 leading-relaxed">
+                        Visualisez votre travail. Déplacez vos tâches d'une colonne à l'autre par simple <strong>Glisser-Déposer</strong>. Organisez par priorité, statut et assignation.
+                    </p>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-slate-50/80 p-4 rounded-2xl border border-slate-200">
+                        <span class="text-xs font-bold text-indigo-600 uppercase mb-3 block tracking-wider">À Faire</span>
+                        <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 mb-3 hover:shadow-md transition-shadow cursor-pointer">
+                            <div class="h-2 w-16 bg-slate-200 rounded-full mb-2"></div>
+                            <div class="h-1.5 w-full bg-slate-100 rounded-full"></div>
+                        </div>
+                        <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow cursor-pointer opacity-70">
+                            <div class="h-2 w-10 bg-slate-200 rounded-full mb-2"></div>
+                            <div class="h-1.5 w-3/4 bg-slate-100 rounded-full"></div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50/80 p-4 rounded-2xl border border-slate-200">
+                        <span class="text-xs font-bold text-amber-600 uppercase mb-3 block tracking-wider">En Cours</span>
+                        <div class="bg-white p-3 rounded-xl shadow-lg border-l-4 border-amber-500 transform -rotate-1 cursor-grab active:cursor-grabbing">
+                            <div class="h-2 w-20 bg-slate-200 rounded-full mb-2"></div>
+                            <div class="h-1.5 w-full bg-slate-100 rounded-full mb-3"></div>
+                            <div class="flex justify-between items-center">
+                                <div class="w-6 h-6 rounded-full bg-amber-100"></div>
+                                <div class="h-4 w-12 bg-amber-50 rounded text-[8px] flex items-center justify-center text-amber-600 font-bold">HIGH</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50/80 p-4 rounded-2xl border border-slate-200">
+                        <span class="text-xs font-bold text-emerald-600 uppercase mb-3 block tracking-wider">Terminé</span>
+                        <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 opacity-60">
+                            <div class="h-2 w-14 bg-slate-200 rounded-full mb-2"></div>
+                            <div class="h-1.5 w-full bg-slate-100 rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <section id="calendar" class="bg-white/70 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/50 hover:border-brand-200 transition-colors duration-300">
+                    <div class="w-10 h-10 bg-rose-100 text-rose-600 rounded-xl flex items-center justify-center mb-4 shadow-sm">
+                        <i class="fa-regular fa-calendar-check text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-2">Vue Calendrier</h3>
+                    <p class="text-sm text-slate-600 mb-4 leading-relaxed">
+                        Ne manquez jamais une échéance. Basculez instantanément entre la vue Kanban et la vue Calendrier pour voir vos deadlines d'un coup d'œil.
+                    </p>
+                </section>
+
+                <section id="team" class="bg-white/70 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/50 hover:border-brand-200 transition-colors duration-300">
+                    <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-4 shadow-sm">
+                        <i class="fa-solid fa-user-group text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 mb-2">Collaboration</h3>
+                    <p class="text-sm text-slate-600 mb-4 leading-relaxed">
+                        Invitez des membres par email ou via le code de projet. Voyez qui travaille sur quoi grâce aux avatars sur les cartes.
+                    </p>
+                </section>
+            </div>
+
+            <section class="text-center py-16 bg-gradient-to-br from-[#14B8A6] to-[#0F766E] rounded-3xl shadow-2xl text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                <div class="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl -ml-10 -mb-10"></div>
+                
+                <div class="relative z-10">
+                    <h2 class="text-3xl font-bold mb-4">Prêt à booster votre productivité ?</h2>
+                    <p class="text-brand-100 mb-8 max-w-lg mx-auto">Rejoignez des milliers d'utilisateurs qui gèrent leurs projets avec TaskFlow.</p>
+                    <a href="{{ url_for('auth.register') }}" class="inline-block bg-white text-brand-700 hover:bg-brand-50 font-bold py-4 px-10 rounded-xl shadow-lg transition-transform hover:-translate-y-1">
+                        Créer un compte gratuit
+                    </a>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <footer class="mt-12 border-t border-slate-200 py-8 text-center text-slate-500 text-sm">
+        <p>&copy; 2026 TaskFlow. Tous droits réservés.</p>
+    </footer>
+
+</body>
+</html>

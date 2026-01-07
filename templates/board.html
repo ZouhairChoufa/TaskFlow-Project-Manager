@@ -5,183 +5,341 @@
 {% block create_btn %}Nouvelle Tâche{% endblock %}
 
 {% block content %}
-<!-- Project Info -->
-<div class="bg-white dark:bg-slate-800/50 rounded-xl p-4 mb-6 shadow-lg border border-slate-200 dark:border-slate-700">
-    <div class="flex items-center justify-between">
+<div class="bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 mb-8 shadow-sm border border-white/20 dark:border-slate-700/50">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">{{ project.name }}</h3>
-            <p class="text-slate-600 dark:text-slate-400">{{ project.description }}</p>
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+                {{ project.name }}
+                {% if project.status == 'private' %}
+                <i class="fa-solid fa-lock text-slate-400 text-sm" title="Projet Privé"></i>
+                {% endif %}
+            </h3>
+            <p class="text-slate-500 dark:text-slate-400 mt-1 text-sm">{{ project.description }}</p>
         </div>
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center gap-4">
             {% if project.deadline %}
-            <div class="text-right">
-                <p class="text-slate-600 dark:text-slate-400 text-sm">Deadline</p>
-                <p class="text-slate-900 dark:text-white">{{ project.deadline.strftime('%Y-%m-%d') if project.deadline else 'No deadline' }}</p>
+            <div class="text-right hidden sm:block">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Échéance</p>
+                <div class="flex items-center justify-end gap-2 text-slate-700 dark:text-slate-200 font-medium">
+                    <i class="fa-regular fa-clock"></i>
+                    {{ project.deadline.strftime('%d/%m/%Y') }}
+                </div>
             </div>
             {% endif %}
-            <button id="newTaskBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-all duration-300 hover:scale-105 flex items-center">
-                <i class="fa-solid fa-plus mr-2"></i>Nouvelle Tâche
+            <button id="newTaskBtn" class="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-brand-500/20 transition-all hover:-translate-y-0.5 flex items-center gap-2">
+                <i class="fa-solid fa-plus"></i>
+                <span>Nouvelle Tâche</span>
             </button>
         </div>
     </div>
 </div>
 
-<!-- Filter Bar -->
-<div class="bg-white dark:bg-slate-800/50 rounded-xl p-4 mb-6 shadow-lg border border-slate-200 dark:border-slate-700">
-    <div class="flex items-center space-x-4">
-        <div class="flex-1">
-            <input type="text" id="searchInput" placeholder="Rechercher par nom..." 
-                   class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
-        </div>
-        <div class="w-48">
-            <select id="memberFilter" class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
-                <option value="">Filtrer par membre...</option>
-                {% set all_assignees = [] %}
-                {% for status_tasks in [board.todo, board.in_progress, board.done] %}
-                    {% for task in status_tasks %}
-                        {% if task.assignee and task.assignee not in all_assignees %}
-                            {% set _ = all_assignees.append(task.assignee) %}
-                        {% endif %}
-                    {% endfor %}
-                {% endfor %}
-                {% for assignee in all_assignees %}
-                <option value="{{ assignee }}">{{ assignee }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <button onclick="clearFilters()" class="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
-            <i class="fa-solid fa-times mr-2"></i>Effacer
-        </button>
+<div class="flex flex-col sm:flex-row gap-4 mb-8">
+    <div class="flex-1 relative">
+        <i class="fa-solid fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
+        <input type="text" id="searchInput" placeholder="Rechercher une tâche..." 
+               class="w-full pl-11 pr-4 py-3 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border border-white/20 dark:border-slate-700/50 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 placeholder-slate-400 transition-all">
     </div>
+    <div class="w-full sm:w-56">
+        <select id="memberFilter" class="w-full px-4 py-3 bg-white/50 dark:bg-slate-800/50 backdrop-blur-md border border-white/20 dark:border-slate-700/50 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/50 cursor-pointer">
+            <option value="">Tous les membres</option>
+            {% set all_assignees = [] %}
+            {% for status_tasks in [board.todo, board.in_progress, board.done] %}
+                {% for task in status_tasks %}
+                    {% if task.assignee and task.assignee not in all_assignees %}
+                        {% set _ = all_assignees.append(task.assignee) %}
+                    {% endif %}
+                {% endfor %}
+            {% endfor %}
+            {% for assignee in all_assignees %}
+            <option value="{{ assignee }}">{{ assignee }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <button onclick="clearFilters()" class="px-4 py-3 bg-white/50 dark:bg-slate-800/50 border border-white/20 dark:border-slate-700/50 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-white dark:hover:bg-slate-700 transition-all">
+        <i class="fa-solid fa-filter-circle-xmark"></i>
+    </button>
 </div>
 
-<!-- Kanban Board -->
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- To Do Column -->
-    <div class="bg-white dark:bg-slate-800/30 rounded-xl p-4 shadow-lg border border-slate-200 dark:border-slate-700">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="font-semibold text-slate-700 dark:text-slate-300 flex items-center">
-                <div class="w-3 h-3 bg-blue-500 rounded-full mr-2"></div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full items-start">
+    
+    <div class="flex flex-col h-full">
+        <div class="flex items-center justify-between mb-3 px-1">
+            <h3 class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 bg-indigo-500 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></span>
                 À Faire
-                <span class="ml-2 bg-blue-100 dark:bg-blue-600 text-blue-700 dark:text-white text-xs px-2 py-1 rounded-full">{{ board.todo|length }}</span>
             </h3>
+            <span class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold px-2.5 py-1 rounded-lg border border-indigo-100 dark:border-indigo-800">
+                {{ board.todo|length }}
+            </span>
         </div>
-        <div class="space-y-3 min-h-[400px] kanban-column" data-status="todo">
+        
+        <div class="kanban-column space-y-3 min-h-[500px] p-3 rounded-2xl bg-slate-100/80 dark:bg-slate-900/40 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700/30 shadow-inner transition-colors duration-200" 
+             data-status="todo">
             {% for task in board.todo %}
-            <div class="task-card bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded-lg p-4 cursor-move hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-all duration-300 border border-blue-200 dark:border-blue-700" 
-                 data-task-id="{{ task.id }}" data-name="{{ task.title }}" data-assignee="{{ task.assignee or '' }}" draggable="true" onclick="editTask('{{ task.id }}', '{{ task.title }}', '{{ task.description }}', '{{ task.status }}', '{{ task.priority or 'low' }}', '{{ task.assignee or '' }}', '{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}')">
-                <div class="flex items-start justify-between mb-2">
-                    <h4 class="text-slate-900 dark:text-white font-medium">{{ task.title }}</h4>
-                    <span class="priority-badge priority-{{ task.priority or 'low' }}">
-                        {{ (task.priority or 'low').title() }}
+            <div class="task-card group bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200/60 dark:border-slate-700 cursor-move transition-all duration-200 hover:-translate-y-1 hover:shadow-md border-l-[4px] border-l-indigo-500"
+                data-task-id="{{ task.id }}" 
+                data-name="{{ task.title }}" 
+                data-assignee="{{ task.assignee or '' }}" 
+                draggable="true" 
+                onclick="editTask('{{ task.id }}', '{{ task.title }}', '{{ task.description }}', '{{ task.status }}', '{{ task.priority or 'low' }}', '{{ task.assignee or '' }}', '{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}')">
+                
+                <div class="flex justify-between items-start mb-2 gap-2">
+                    <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">
+                        {{ task.title }}
+                    </h4>
+                    <span class="flex-shrink-0 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wide
+                        {% if task.priority == 'high' %}bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400
+                        {% elif task.priority == 'medium' %}bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400
+                        {% else %}bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400{% endif %}">
+                        {{ 'HIGH' if task.priority == 'high' else ('MED' if task.priority == 'medium' else 'LOW') }}
                     </span>
                 </div>
-                <p class="text-slate-600 dark:text-slate-400 text-sm mb-3">{{ task.description }}</p>
-                <div class="flex items-center justify-between text-xs">
-                    <span class="text-slate-500 dark:text-slate-500">
-                        {% if task.assignee %}<i class="fa-solid fa-user mr-1"></i>{{ task.assignee }}{% else %}<i class="fa-solid fa-user-slash mr-1"></i>Unassigned{% endif %}
-                    </span>
-                    {% if task.due_date %}
-                    <span class="text-slate-500 dark:text-slate-500"><i class="fa-solid fa-calendar mr-1"></i>{{ task.due_date.strftime('%m/%d') }}</span>
+
+                <p class="text-xs text-slate-500 dark:text-slate-400 mb-4 font-medium">
+                    {{ task.description }}
+                </p>
+
+                <div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-700/50 pt-3 mt-auto">
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        {% if task.assignee %}
+                        <div class="w-6 h-6 flex-shrink-0 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-300 ring-2 ring-white dark:ring-slate-800">
+                            {{ task.assignee[:2].upper() }}
+                        </div>
+                        <span class="text-xs text-slate-700 dark:text-slate-200 font-bold" title="{{ task.assignee }}">
+                            {{ task.assignee }}
+                        </span>
+                        {% else %}
+                        <div class="w-6 h-6 rounded-full border border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center">
+                            <i class="fa-solid fa-user-plus text-[10px] text-slate-400"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if task.due_date and now is defined %}
+                    {# Calculate days remaining #}
+                    {% set days_left = (task.due_date - now).days %}
+                    
+                    <div class="flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold border shadow-sm transition-colors
+                        {% if task.status == 'done' %}
+                            bg-slate-50 text-slate-400 border-slate-200 dark:bg-slate-800 dark:text-slate-500 dark:border-slate-700
+                        {% elif days_left < 2 %}
+                            bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-900/20 dark:border-rose-800 animate-pulse
+                        {% elif days_left == 2 %}
+                            bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800
+                        {% elif days_left == 3 %}
+                            bg-yellow-50 text-yellow-600 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800
+                        {% else %}
+                            bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600
+                        {% endif %}">
+                        
+                        <i class="fa-regular fa-clock"></i>
+                        <span>{{ task.due_date.strftime('%d/%m') }}</span>
+                    </div>
                     {% endif %}
                 </div>
             </div>
             {% endfor %}
+            
+            {% if board.todo|length == 0 %}
+            <div class="empty-state h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 min-h-[150px] border-2 border-dashed border-slate-200 dark:border-slate-700/50 rounded-xl m-2">
+                <i class="fa-solid fa-plus text-xl mb-2 opacity-50"></i>
+                <span class="text-xs font-medium">Déposer ici</span>
+            </div>
+            {% endif %}
         </div>
     </div>
 
-    <!-- In Progress Column -->
-    <div class="bg-white dark:bg-slate-800/30 rounded-xl p-4 shadow-lg border border-slate-200 dark:border-slate-700">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="font-semibold text-slate-700 dark:text-slate-300 flex items-center">
-                <div class="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
+    <div class="flex flex-col h-full">
+        <div class="flex items-center justify-between mb-3 px-1">
+            <h3 class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 bg-amber-500 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.5)] animate-pulse"></span>
                 En Cours
-                <span class="ml-2 bg-orange-100 dark:bg-orange-600 text-orange-700 dark:text-white text-xs px-2 py-1 rounded-full">{{ board.in_progress|length }}</span>
             </h3>
+            <span class="bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 text-xs font-bold px-2.5 py-1 rounded-lg border border-amber-100 dark:border-amber-800">
+                {{ board.in_progress|length }}
+            </span>
         </div>
-        <div class="space-y-3 min-h-[400px] kanban-column" data-status="in_progress">
+        
+        <div class="kanban-column space-y-3 min-h-[500px] p-3 rounded-2xl bg-slate-100/80 dark:bg-slate-900/40 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700/30 shadow-inner transition-colors duration-200" 
+             data-status="in_progress">
             {% for task in board.in_progress %}
-            <div class="task-card bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500 rounded-lg p-4 cursor-move hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-all duration-300 border border-orange-200 dark:border-orange-700" 
-                 data-task-id="{{ task.id }}" data-name="{{ task.title }}" data-assignee="{{ task.assignee or '' }}" draggable="true" onclick="editTask('{{ task.id }}', '{{ task.title }}', '{{ task.description }}', '{{ task.status }}', '{{ task.priority or 'low' }}', '{{ task.assignee or '' }}', '{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}')">
-                <div class="flex items-start justify-between mb-2">
-                    <h4 class="text-slate-900 dark:text-white font-medium">{{ task.title }}</h4>
-                    <span class="priority-badge priority-{{ task.priority or 'low' }}">
-                        {{ (task.priority or 'low').title() }}
+            <div class="task-card group bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200/60 dark:border-slate-700 cursor-move transition-all duration-200 hover:-translate-y-1 hover:shadow-md border-l-[4px] border-l-amber-500"
+                data-task-id="{{ task.id }}" 
+                data-name="{{ task.title }}" 
+                data-assignee="{{ task.assignee or '' }}" 
+                draggable="true" 
+                onclick="editTask('{{ task.id }}', '{{ task.title }}', '{{ task.description }}', '{{ task.status }}', '{{ task.priority or 'low' }}', '{{ task.assignee or '' }}', '{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}')">
+                
+                <div class="flex justify-between items-start mb-2 gap-2">
+                    <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">
+                        {{ task.title }}
+                    </h4>
+                    <span class="flex-shrink-0 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wide
+                        {% if task.priority == 'high' %}bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400
+                        {% elif task.priority == 'medium' %}bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400
+                        {% else %}bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400{% endif %}">
+                        {{ 'HIGH' if task.priority == 'high' else ('MED' if task.priority == 'medium' else 'LOW') }}
                     </span>
                 </div>
-                <p class="text-slate-600 dark:text-slate-400 text-sm mb-3">{{ task.description }}</p>
-                <div class="flex items-center justify-between text-xs">
-                    <span class="text-slate-500 dark:text-slate-500">
-                        {% if task.assignee %}<i class="fa-solid fa-user mr-1"></i>{{ task.assignee }}{% else %}<i class="fa-solid fa-user-slash mr-1"></i>Unassigned{% endif %}
-                    </span>
-                    {% if task.due_date %}
-                    <span class="text-slate-500 dark:text-slate-500"><i class="fa-solid fa-calendar mr-1"></i>{{ task.due_date.strftime('%m/%d') }}</span>
+
+                <p class="text-xs text-slate-500 dark:text-slate-400 mb-4 font-medium">
+                    {{ task.description }}
+                </p>
+
+                <div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-700/50 pt-3 mt-auto">
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        {% if task.assignee %}
+                        <div class="w-6 h-6 flex-shrink-0 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-300 ring-2 ring-white dark:ring-slate-800">
+                            {{ task.assignee[:2].upper() }}
+                        </div>
+                        <span class="text-xs text-slate-700 dark:text-slate-200 font-bold" title="{{ task.assignee }}">
+                            {{ task.assignee }}
+                        </span>
+                        {% else %}
+                        <div class="w-6 h-6 rounded-full border border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center">
+                            <i class="fa-solid fa-user-plus text-[10px] text-slate-400"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if task.due_date and now is defined %}
+                    {% set days_left = (task.due_date - now).days %}
+                    <div class="flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold border shadow-sm transition-colors
+                        {% if task.status == 'done' %}
+                            bg-slate-50 text-slate-400 border-slate-200 dark:bg-slate-800 dark:text-slate-500 dark:border-slate-700
+                        {% elif days_left < 2 %}
+                            bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-900/20 dark:border-rose-800 animate-pulse
+                        {% elif days_left == 2 %}
+                            bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800
+                        {% elif days_left == 3 %}
+                            bg-yellow-50 text-yellow-600 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800
+                        {% else %}
+                            bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600
+                        {% endif %}">
+                        <i class="fa-regular fa-clock"></i>
+                        <span>{{ task.due_date.strftime('%d/%m') }}</span>
+                    </div>
                     {% endif %}
                 </div>
             </div>
             {% endfor %}
+             {% if board.in_progress|length == 0 %}
+            <div class="empty-state h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 min-h-[150px] border-2 border-dashed border-slate-200 dark:border-slate-700/50 rounded-xl m-2">
+                <i class="fa-solid fa-spinner text-xl mb-2 opacity-50"></i>
+                <span class="text-xs font-medium">Rien en cours</span>
+            </div>
+            {% endif %}
         </div>
     </div>
 
-    <!-- Done Column -->
-    <div class="bg-white dark:bg-slate-800/30 rounded-xl p-4 shadow-lg border border-slate-200 dark:border-slate-700">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="font-semibold text-slate-700 dark:text-slate-300 flex items-center">
-                <div class="w-3 h-3 bg-emerald-500 rounded-full mr-2"></div>
+    <div class="flex flex-col h-full">
+        <div class="flex items-center justify-between mb-3 px-1">
+            <h3 class="font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)]"></span>
                 Terminé
-                <span class="ml-2 bg-emerald-100 dark:bg-emerald-600 text-emerald-700 dark:text-white text-xs px-2 py-1 rounded-full">{{ board.done|length }}</span>
             </h3>
+            <span class="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-bold px-2.5 py-1 rounded-lg border border-emerald-100 dark:border-emerald-800">
+                {{ board.done|length }}
+            </span>
         </div>
-        <div class="space-y-3 min-h-[400px] kanban-column" data-status="done">
+        
+        <div class="kanban-column space-y-3 min-h-[500px] p-3 rounded-2xl bg-slate-100/80 dark:bg-slate-900/40 backdrop-blur-sm border border-slate-200/60 dark:border-slate-700/30 shadow-inner transition-colors duration-200" 
+             data-status="done">
             {% for task in board.done %}
-            <div class="task-card bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 rounded-lg p-4 cursor-move hover:bg-green-100 dark:hover:bg-green-900/30 transition-all duration-300 border border-green-200 dark:border-green-700" 
-                 data-task-id="{{ task.id }}" data-name="{{ task.title }}" data-assignee="{{ task.assignee or '' }}" draggable="true" onclick="editTask('{{ task.id }}', '{{ task.title }}', '{{ task.description }}', '{{ task.status }}', '{{ task.priority or 'low' }}', '{{ task.assignee or '' }}', '{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}')">
-                <div class="flex items-start justify-between mb-2">
-                    <h4 class="text-slate-900 dark:text-white font-medium">{{ task.title }}</h4>
-                    <span class="priority-badge priority-{{ task.priority or 'low' }}">
-                        {{ (task.priority or 'low').title() }}
+            <div class="task-card group bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200/60 dark:border-slate-700 cursor-move transition-all duration-200 hover:-translate-y-1 hover:shadow-md border-l-[4px] border-l-emerald-500"
+                data-task-id="{{ task.id }}" 
+                data-name="{{ task.title }}" 
+                data-assignee="{{ task.assignee or '' }}" 
+                draggable="true" 
+                onclick="editTask('{{ task.id }}', '{{ task.title }}', '{{ task.description }}', '{{ task.status }}', '{{ task.priority or 'low' }}', '{{ task.assignee or '' }}', '{{ task.due_date.strftime('%Y-%m-%d') if task.due_date else '' }}')">
+                
+                <div class="flex justify-between items-start mb-2 gap-2">
+                    <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100 leading-tight">
+                        {{ task.title }}
+                    </h4>
+                    <span class="flex-shrink-0 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-wide
+                        {% if task.priority == 'high' %}bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400
+                        {% elif task.priority == 'medium' %}bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400
+                        {% else %}bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400{% endif %}">
+                        {{ 'HIGH' if task.priority == 'high' else ('MED' if task.priority == 'medium' else 'LOW') }}
                     </span>
                 </div>
-                <p class="text-slate-600 dark:text-slate-400 text-sm mb-3">{{ task.description }}</p>
-                <div class="flex items-center justify-between text-xs">
-                    <span class="text-slate-500 dark:text-slate-500">
-                        {% if task.assignee %}<i class="fa-solid fa-user mr-1"></i>{{ task.assignee }}{% else %}<i class="fa-solid fa-user-slash mr-1"></i>Unassigned{% endif %}
-                    </span>
-                    {% if task.due_date %}
-                    <span class="text-slate-500 dark:text-slate-500"><i class="fa-solid fa-calendar mr-1"></i>{{ task.due_date.strftime('%m/%d') }}</span>
+
+                <p class="text-xs text-slate-500 dark:text-slate-400 mb-4 font-medium">
+                    {{ task.description }}
+                </p>
+
+                <div class="flex items-center justify-between border-t border-slate-100 dark:border-slate-700/50 pt-3 mt-auto">
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        {% if task.assignee %}
+                        <div class="w-6 h-6 flex-shrink-0 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-600 dark:text-slate-300 ring-2 ring-white dark:ring-slate-800">
+                            {{ task.assignee[:2].upper() }}
+                        </div>
+                        <span class="text-xs text-slate-700 dark:text-slate-200 font-bold" title="{{ task.assignee }}">
+                            {{ task.assignee }}
+                        </span>
+                        {% else %}
+                        <div class="w-6 h-6 rounded-full border border-dashed border-slate-300 dark:border-slate-600 flex items-center justify-center">
+                            <i class="fa-solid fa-user-plus text-[10px] text-slate-400"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    {% if task.due_date and now is defined %}
+                    {% set days_left = (task.due_date - now).days %}
+                    <div class="flex items-center gap-1.5 px-2 py-1 rounded-md text-[10px] font-bold border shadow-sm transition-colors
+                        {% if task.status == 'done' %}
+                            bg-slate-50 text-slate-400 border-slate-200 dark:bg-slate-800 dark:text-slate-500 dark:border-slate-700
+                        {% elif days_left < 2 %}
+                            bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-900/20 dark:border-rose-800 animate-pulse
+                        {% elif days_left == 2 %}
+                            bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800
+                        {% elif days_left == 3 %}
+                            bg-yellow-50 text-yellow-600 border-yellow-200 dark:bg-yellow-900/20 dark:border-yellow-800
+                        {% else %}
+                            bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600
+                        {% endif %}">
+                        <i class="fa-regular fa-clock"></i>
+                        <span>{{ task.due_date.strftime('%d/%m') }}</span>
+                    </div>
                     {% endif %}
                 </div>
             </div>
             {% endfor %}
+            {% if board.done|length == 0 %}
+            <div class="empty-state h-full flex flex-col items-center justify-center text-slate-400 dark:text-slate-600 min-h-[150px] border-2 border-dashed border-slate-200 dark:border-slate-700/50 rounded-xl m-2">
+                <i class="fa-solid fa-check text-xl mb-2 opacity-50"></i>
+                <span class="text-xs font-medium">Aucune tâche terminée</span>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>
 
 <style>
-    .priority-high {
-        @apply bg-rose-600 text-white text-xs px-2 py-1 rounded-full;
+    .drag-over {
+        background-color: rgba(241, 245, 249, 0.5); /* Slate-100/50 */
+        border: 2px dashed #cbd5e1;
+        border-radius: 1rem;
     }
-    .priority-medium {
-        @apply bg-amber-600 text-white text-xs px-2 py-1 rounded-full;
-    }
-    .priority-low {
-        @apply bg-slate-600 text-white text-xs px-2 py-1 rounded-full;
+    .dark .drag-over {
+        background-color: rgba(30, 41, 59, 0.5); /* Slate-800/50 */
+        border-color: #475569;
     }
     .task-card.dragging {
         opacity: 0.5;
-        transform: rotate(5deg);
+        transform: scale(0.95) rotate(2deg);
+        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     }
 </style>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // Activer la navigation projet
     document.addEventListener('DOMContentLoaded', function() {
         switchToProjectNav('{{ project.id }}', '{{ project.name }}');
-        
-        // Marquer l'onglet actuel comme actif
-        document.getElementById('kanbanTab').classList.add('bg-indigo-100', 'dark:bg-indigo-900/30', 'text-indigo-600', 'dark:text-indigo-400');
+        document.getElementById('kanbanTab').classList.add('bg-brand-50', 'dark:bg-brand-900/20', 'text-brand-600', 'dark:text-brand-400');
     });
 
     let draggedTask = null;
@@ -216,6 +374,12 @@
             this.classList.remove('drag-over');
             
             if (draggedTask) {
+                // --- FIX: Remove Empty State ---
+                const emptyState = this.querySelector('.empty-state');
+                if (emptyState) {
+                    emptyState.remove();
+                }
+                
                 const newStatus = this.dataset.status;
                 const taskId = draggedTask.dataset.taskId;
                 
@@ -244,60 +408,86 @@
         });
     });
 
-    // Create Task Modal - Both buttons (navbar and board)
+    // Update task color based on status
+    function updateTaskColor(taskElement, status) {
+        // Reset borders
+        taskElement.classList.remove('border-l-indigo-500', 'border-l-amber-500', 'border-l-emerald-500');
+        
+        // Add new border
+        if (status === 'todo') {
+            taskElement.classList.add('border-l-indigo-500');
+        } else if (status === 'in_progress') {
+            taskElement.classList.add('border-l-amber-500');
+        } else if (status === 'done') {
+            taskElement.classList.add('border-l-emerald-500');
+        }
+    }
+
     function openNewTaskModal() {
         showModal(`
-            <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-4">Créer une Nouvelle Tâche</h3>
-            <form id="taskForm">
-                <div class="space-y-4">
+            <div class="text-left">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-brand-100 dark:bg-brand-900/30 text-brand-600 flex items-center justify-center">
+                        <i class="fa-solid fa-plus"></i>
+                    </div>
+                    Nouvelle Tâche
+                </h3>
+                <form id="taskForm" class="space-y-5">
                     <div>
-                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Titre de la Tâche</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Titre</label>
                         <input type="text" name="title" required 
-                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                               class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                               placeholder="Ex: Refaire la maquette...">
                     </div>
-                    <div>
-                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Description</label>
-                        <textarea name="description" rows="3"
-                                  class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"></textarea>
-                    </div>
+                    
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Statut</label>
-                            <select name="status" class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Statut</label>
+                            <select name="status" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none">
                                 <option value="todo">À Faire</option>
                                 <option value="in_progress">En Cours</option>
                                 <option value="done">Terminé</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Priorité</label>
-                            <select name="priority" class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
-                                <option value="low">Faible</option>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Priorité</label>
+                            <select name="priority" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none">
+                                <option value="low">Basse</option>
                                 <option value="medium">Moyenne</option>
                                 <option value="high">Haute</option>
                             </select>
                         </div>
                     </div>
+
                     <div>
-                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Date d'échéance</label>
-                        <input type="date" name="due_date"
-                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description</label>
+                        <textarea name="description" rows="3" 
+                                  class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none transition-all"></textarea>
                     </div>
-                    <div>
-                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Assigné à</label>
-                        <input type="text" name="assignee" placeholder="Nom de la personne assignée"
-                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Assigné à</label>
+                            <input type="text" name="assignee" placeholder="Nom du membre"
+                                   class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Date limite</label>
+                            <input type="date" name="due_date" 
+                                   class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none">
+                        </div>
                     </div>
-                    <div class="flex space-x-3 pt-4">
-                        <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors">
-                            Créer la Tâche
-                        </button>
-                        <button type="button" onclick="hideModal()" class="flex-1 bg-slate-500 dark:bg-slate-600 hover:bg-slate-600 dark:hover:bg-slate-700 text-white py-2 rounded-lg transition-colors">
+
+                    <div class="flex gap-3 pt-4">
+                        <button type="button" onclick="hideModal()" class="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
                             Annuler
                         </button>
+                        <button type="submit" class="flex-1 px-4 py-3 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5">
+                            Créer
+                        </button>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         `);
 
         document.getElementById('taskForm').addEventListener('submit', async function(e) {
@@ -320,92 +510,74 @@
         });
     }
 
-    // Event listeners for both buttons
-    const createBtn = document.getElementById('createBtn');
-    const newTaskBtn = document.getElementById('newTaskBtn');
-    
-    if (createBtn) {
-        createBtn.addEventListener('click', openNewTaskModal);
-    }
-    
-    if (newTaskBtn) {
-        newTaskBtn.addEventListener('click', openNewTaskModal);
-    }
-
-    // Update task color based on status
-    function updateTaskColor(taskElement, status) {
-        // Remove all status colors
-        taskElement.className = taskElement.className.replace(/bg-\w+-\d+/g, '');
-        taskElement.className = taskElement.className.replace(/border-\w+-\d+/g, '');
-        taskElement.className = taskElement.className.replace(/hover:bg-\w+-\d+/g, '');
-        
-        // Add new color based on status
-        if (status === 'todo') {
-            taskElement.className += ' bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30 border-blue-200 dark:border-blue-700';
-        } else if (status === 'in_progress') {
-            taskElement.className += ' bg-orange-50 dark:bg-orange-900/20 border-l-4 border-orange-500 hover:bg-orange-100 dark:hover:bg-orange-900/30 border-orange-200 dark:border-orange-700';
-        } else if (status === 'done') {
-            taskElement.className += ' bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 hover:bg-green-100 dark:hover:bg-green-900/30 border-green-200 dark:border-green-700';
-        }
-    }
-
-    // Edit Task Function
     function editTask(id, title, description, status, priority, assignee, dueDate) {
         showModal(`
-            <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-4">Edit Task</h3>
-            <form id="editTaskForm">
-                <input type="hidden" name="task_id" value="${id}">
-                <div class="space-y-4">
+            <div class="text-left">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 flex items-center justify-center">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </div>
+                    Modifier Tâche
+                </h3>
+                <form id="editTaskForm" class="space-y-5">
+                    <input type="hidden" name="task_id" value="${id}">
                     <div>
-                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Task Title</label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Titre</label>
                         <input type="text" name="title" value="${title}" required 
-                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                               class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
                     </div>
-                    <div>
-                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Description</label>
-                        <textarea name="description" rows="3" class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">${description}</textarea>
-                    </div>
+                    
                     <div class="grid grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Status</label>
-                            <select name="status" class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
-                                <option value="todo" ${status === 'todo' ? 'selected' : ''}>To Do</option>
-                                <option value="in_progress" ${status === 'in_progress' ? 'selected' : ''}>In Progress</option>
-                                <option value="done" ${status === 'done' ? 'selected' : ''}>Done</option>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Statut</label>
+                            <select name="status" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none">
+                                <option value="todo" ${status === 'todo' ? 'selected' : ''}>À Faire</option>
+                                <option value="in_progress" ${status === 'in_progress' ? 'selected' : ''}>En Cours</option>
+                                <option value="done" ${status === 'done' ? 'selected' : ''}>Terminé</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Priority</label>
-                            <select name="priority" class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
-                                <option value="low" ${priority === 'low' ? 'selected' : ''}>Low</option>
-                                <option value="medium" ${priority === 'medium' ? 'selected' : ''}>Medium</option>
-                                <option value="high" ${priority === 'high' ? 'selected' : ''}>High</option>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Priorité</label>
+                            <select name="priority" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none">
+                                <option value="low" ${priority === 'low' ? 'selected' : ''}>Basse</option>
+                                <option value="medium" ${priority === 'medium' ? 'selected' : ''}>Moyenne</option>
+                                <option value="high" ${priority === 'high' ? 'selected' : ''}>Haute</option>
                             </select>
                         </div>
                     </div>
+
                     <div>
-                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Due Date</label>
-                        <input type="date" name="due_date" value="${dueDate}"
-                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description</label>
+                        <textarea name="description" rows="3" 
+                                  class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none transition-all">${description}</textarea>
                     </div>
-                    <div>
-                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Assignee</label>
-                        <input type="text" name="assignee" value="${assignee}" placeholder="Enter assignee name"
-                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Assigné à</label>
+                            <input type="text" name="assignee" value="${assignee}" placeholder="Nom du membre"
+                                   class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Date limite</label>
+                            <input type="date" name="due_date" value="${dueDate}"
+                                   class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl outline-none">
+                        </div>
                     </div>
-                    <div class="flex space-x-3 pt-4">
-                        <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors">
-                            Update Task
+
+                    <div class="flex gap-3 pt-4">
+                        <button type="button" onclick="deleteTask('${id}')" class="px-4 py-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 font-bold rounded-xl hover:bg-rose-100 dark:hover:bg-rose-900/40 transition-colors" title="Supprimer">
+                            <i class="fa-solid fa-trash"></i>
                         </button>
-                        <button type="button" onclick="deleteTask('${id}')" class="bg-rose-600 hover:bg-rose-700 text-white py-2 px-4 rounded-lg transition-colors">
-                            Delete
+                        <button type="button" onclick="hideModal()" class="px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                            Annuler
                         </button>
-                        <button type="button" onclick="hideModal()" class="bg-slate-500 dark:bg-slate-600 hover:bg-slate-600 dark:hover:bg-slate-700 text-white py-2 px-4 rounded-lg transition-colors">
-                            Cancel
+                        <button type="submit" class="flex-1 px-4 py-3 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5">
+                            Mettre à jour
                         </button>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         `);
 
         document.getElementById('editTaskForm').addEventListener('submit', async function(e) {
@@ -427,9 +599,8 @@
         });
     }
 
-    // Delete Task Function
     async function deleteTask(taskId) {
-        if (confirm('Are you sure you want to delete this task?')) {
+        if (confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
             const result = await apiCall(`/tasks/${taskId}/delete`, {
                 method: 'DELETE'
             });
@@ -441,7 +612,12 @@
         }
     }
 
-    // Real-time filtering functionality
+    const createBtn = document.getElementById('createBtn');
+    const newTaskBtn = document.getElementById('newTaskBtn');
+    
+    if (createBtn) createBtn.addEventListener('click', openNewTaskModal);
+    if (newTaskBtn) newTaskBtn.addEventListener('click', openNewTaskModal);
+
     function filterTasks() {
         const searchText = document.getElementById('searchInput').value.toLowerCase();
         const selectedMember = document.getElementById('memberFilter').value;
@@ -468,7 +644,6 @@
         filterTasks();
     }
     
-    // Add event listeners for real-time filtering
     document.getElementById('searchInput').addEventListener('input', filterTasks);
     document.getElementById('memberFilter').addEventListener('change', filterTasks);
 </script>

@@ -1,99 +1,134 @@
 {% extends "base_fr.html" %}
 
-{% block title %}Dashboard - TaskFlow{% endblock %}
-{% block header %}Dashboard{% endblock %}
+{% block title %}Tableau de Bord - TaskFlow{% endblock %}
+{% block header %}Tableau de Bord{% endblock %}
 
 {% block content %}
-<!-- Stats Cards -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-    <div class="bg-white dark:bg-slate-800/50 rounded-xl p-6 hover:scale-105 transition-all duration-300 shadow-lg border border-slate-200 dark:border-slate-700">
-        <div class="flex items-center">
-            <div class="p-3 bg-indigo-100 dark:bg-indigo-600/20 rounded-lg">
-                <i class="fa-solid fa-briefcase text-indigo-600 dark:text-indigo-400 text-xl"></i>
+<div class="mb-8">
+    <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
+        Bonjour, {{ session.get('user', {}).get('username', 'Utilisateur') }} 👋
+    </h1>
+    <p class="text-slate-500 dark:text-slate-400">Voici ce qui se passe avec vos projets aujourd'hui.</p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="group bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-white/20 dark:border-slate-700/50">
+        <div class="flex items-center justify-between mb-4">
+            <div class="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-300">
+                <i class="fa-solid fa-folder-open text-xl"></i>
             </div>
-            <div class="ml-4">
-                <p class="text-slate-600 dark:text-slate-400 text-sm">Total Projects</p>
-                <p class="text-2xl font-bold text-slate-900 dark:text-white">{{ stats.total_projects }}</p>
-            </div>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Projets</span>
         </div>
+        <h3 class="text-3xl font-bold text-slate-900 dark:text-white">{{ stats.total_projects }}</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Actifs actuellement</p>
     </div>
 
-    <div class="bg-white dark:bg-slate-800/50 rounded-xl p-6 hover:scale-105 transition-all duration-300 shadow-lg border border-slate-200 dark:border-slate-700">
-        <div class="flex items-center">
-            <div class="p-3 bg-emerald-100 dark:bg-emerald-600/20 rounded-lg">
-                <i class="fa-solid fa-list-check text-emerald-600 dark:text-emerald-400 text-xl"></i>
+    <div class="group bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-white/20 dark:border-slate-700/50">
+        <div class="flex items-center justify-between mb-4">
+            <div class="p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-300">
+                <i class="fa-solid fa-list-check text-xl"></i>
             </div>
-            <div class="ml-4">
-                <p class="text-slate-600 dark:text-slate-400 text-sm">Total Tasks</p>
-                <p class="text-2xl font-bold text-slate-900 dark:text-white">{{ stats.total_tasks }}</p>
-            </div>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tâches</span>
         </div>
+        <h3 class="text-3xl font-bold text-slate-900 dark:text-white">{{ stats.total_tasks }}</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Assignées à vous</p>
     </div>
 
-    <div class="bg-white dark:bg-slate-800/50 rounded-xl p-6 hover:scale-105 transition-all duration-300 shadow-lg border border-slate-200 dark:border-slate-700">
-        <div class="flex items-center">
-            <div class="p-3 bg-rose-100 dark:bg-rose-600/20 rounded-lg">
-                <i class="fa-solid fa-triangle-exclamation text-rose-600 dark:text-rose-400 text-xl"></i>
+    <div class="group bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-white/20 dark:border-slate-700/50">
+        <div class="flex items-center justify-between mb-4">
+            <div class="p-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-xl group-hover:bg-rose-600 group-hover:text-white transition-colors duration-300">
+                <i class="fa-solid fa-clock-rotate-left text-xl"></i>
             </div>
-            <div class="ml-4">
-                <p class="text-slate-600 dark:text-slate-400 text-sm">Overdue Tasks</p>
-                <p class="text-2xl font-bold text-slate-900 dark:text-white">{{ stats.overdue_tasks }}</p>
-            </div>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">En Retard</span>
         </div>
+        <h3 class="text-3xl font-bold text-slate-900 dark:text-white">{{ stats.overdue_tasks }}</h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Nécessitent attention</p>
     </div>
 
-    <div class="bg-white dark:bg-slate-800/50 rounded-xl p-6 hover:scale-105 transition-all duration-300 shadow-lg border border-slate-200 dark:border-slate-700">
-        <div class="flex items-center">
-            <div class="p-3 bg-amber-100 dark:bg-amber-600/20 rounded-lg">
-                <i class="fa-solid fa-chart-line text-amber-600 dark:text-amber-400 text-xl"></i>
+    <div class="group bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 border border-white/20 dark:border-slate-700/50">
+        <div class="flex items-center justify-between mb-4">
+            <div class="p-3 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl group-hover:bg-amber-600 group-hover:text-white transition-colors duration-300">
+                <i class="fa-solid fa-chart-pie text-xl"></i>
             </div>
-            <div class="ml-4">
-                <p class="text-slate-600 dark:text-slate-400 text-sm">Completion Rate</p>
-                <p class="text-2xl font-bold text-slate-900 dark:text-white">
-                    {% if stats.total_tasks > 0 %}
-                        {{ "%.0f"|format((stats.status_distribution.done / stats.total_tasks) * 100) }}%
-                    {% else %}
-                        0%
-                    {% endif %}
-                </p>
-            </div>
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Productivité</span>
         </div>
+        <h3 class="text-3xl font-bold text-slate-900 dark:text-white">
+            {% if stats.total_tasks > 0 %}
+                {{ "%.0f"|format((stats.status_distribution.done / stats.total_tasks) * 100) }}%
+            {% else %}
+                0%
+            {% endif %}
+        </h3>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Taux de complétion</p>
     </div>
 </div>
 
-<!-- Charts and Recent Projects -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <!-- Task Distribution Chart -->
-    <div class="bg-white dark:bg-slate-800/50 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-700 h-[400px] flex flex-col">
-        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Task Distribution</h3>
-        <div class="relative flex-1 w-full">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <div class="bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-white/20 dark:border-slate-700/50 flex flex-col h-[400px]">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-6">Répartition des Tâches</h3>
+        <div class="relative flex-1 w-full flex items-center justify-center">
             <canvas id="taskChart"></canvas>
+            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span class="text-3xl font-bold text-slate-800 dark:text-white">{{ stats.total_tasks }}</span>
+                <span class="text-xs text-slate-500 uppercase font-bold">Total</span>
+            </div>
         </div>
     </div>
 
-    <!-- Recent Projects -->
-    <div class="bg-white dark:bg-slate-800/50 rounded-xl p-6 shadow-lg border border-slate-200 dark:border-slate-700 h-[400px] flex flex-col">
-        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">Recent Projects</h3>
-        <div class="flex-1 overflow-y-auto space-y-3">
+    <div class="lg:col-span-2 bg-white/70 dark:bg-slate-800/60 backdrop-blur-xl rounded-2xl p-6 shadow-lg border border-white/20 dark:border-slate-700/50 flex flex-col h-[400px]">
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white">Projets Récents</h3>
+            <button id="createBtn" class="text-sm font-bold text-brand-600 dark:text-brand-400 hover:text-brand-700 flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-900/20 transition-colors">
+                <i class="fa-solid fa-plus"></i> Nouveau Projet
+            </button>
+        </div>
+        
+        <div class="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
             {% for project in projects %}
-            {% set current_user_id = 'anonymous' %}
-            {% set is_member = current_user_id in project.get('members', []) %}
-            <div class="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700/30 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-all duration-300">
-                <div>
-                    <h4 class="text-slate-900 dark:text-white font-medium">{{ project.name }}</h4>
-                    <p class="text-slate-600 dark:text-slate-400 text-sm">{{ project.description[:50] }}...</p>
+            {% set current_user_id = session.get('user', {}).get('uid') %}
+            {% set is_member = current_user_id in project.get('members', []) or project.get('created_by') == current_user_id %}
+            
+            <div class="group flex items-center justify-between p-4 bg-white/50 dark:bg-slate-700/30 rounded-xl hover:bg-white dark:hover:bg-slate-700 border border-slate-100 dark:border-slate-700/50 hover:border-brand-200 dark:hover:border-brand-500/30 hover:shadow-md transition-all duration-200">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-600 flex items-center justify-center text-slate-500 dark:text-slate-300 font-bold text-lg border border-slate-200 dark:border-slate-500">
+                        {{ project.name[0] | upper }}
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+                            {{ project.name }}
+                        </h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-1 max-w-md">
+                            {{ project.description or 'Aucune description' }}
+                        </p>
+                    </div>
                 </div>
-                {% if is_member %}
-                <a href="{{ url_for('projects.project_board', project_id=project.id) }}" 
-                   class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors">
-                    <i class="fa-solid fa-arrow-right"></i>
-                </a>
-                {% else %}
-                <button onclick="openJoinModal('{{ project.id }}', '{{ project.name }}')" 
-                        class="text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 transition-colors">
-                    <i class="fa-solid fa-lock"></i>
-                </button>
-                {% endif %}
+
+                <div class="flex items-center gap-3">
+                    {% if is_member %}
+                    <span class="hidden sm:inline-flex px-2 py-1 rounded text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-100 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400 uppercase tracking-wide">
+                        Membre
+                    </span>
+                    <a href="{{ url_for('projects.project_board', project_id=project.id) }}" 
+                       class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-600 text-slate-400 hover:bg-brand-600 hover:text-white transition-all">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                    {% else %}
+                    <span class="hidden sm:inline-flex px-2 py-1 rounded text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-100 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400 uppercase tracking-wide">
+                        Privé
+                    </span>
+                    <button onclick="openJoinModal('{{ project.id }}', '{{ project.name }}')" 
+                            class="w-8 h-8 flex items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-500 hover:bg-amber-500 hover:text-white transition-all"
+                            title="Rejoindre">
+                        <i class="fa-solid fa-lock"></i>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="flex flex-col items-center justify-center h-full text-slate-400">
+                <i class="fa-solid fa-folder-open text-3xl mb-3 opacity-50"></i>
+                <p>Aucun projet trouvé</p>
             </div>
             {% endfor %}
         </div>
@@ -103,12 +138,16 @@
 
 {% block scripts %}
 <script>
-    // Task Distribution Chart
+    // Chart.js Configuration
     const ctx = document.getElementById('taskChart').getContext('2d');
+    
+    // Get colors from CSS variables or define them here
+    const isDark = document.documentElement.classList.contains('dark');
+    
     new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['To Do', 'In Progress', 'Done'],
+            labels: ['À Faire', 'En Cours', 'Terminé'],
             datasets: [{
                 data: [
                     {{ stats.status_distribution.todo }},
@@ -116,114 +155,143 @@
                     {{ stats.status_distribution.done }}
                 ],
                 backgroundColor: [
-                    '#64748b',
-                    '#6366f1',
-                    '#10b981'
+                    '#6366f1', // Indigo (To Do)
+                    '#f59e0b', // Amber (In Progress)
+                    '#10b981'  // Emerald (Done)
                 ],
-                borderWidth: 0
+                borderWidth: 0,
+                hoverOffset: 4
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '75%', // Thinner ring
             plugins: {
                 legend: {
                     position: 'bottom',
                     labels: {
                         usePointStyle: true,
                         pointStyle: 'circle',
-                        color: '#475569',
-                        font: {
-                            size: 12,
-                            family: "'Inter', sans-serif"
-                        },
-                        padding: 20,
-                        pointStyleWidth: 10
+                        color: isDark ? '#94a3b8' : '#64748b',
+                        font: { size: 11, family: "'Plus Jakarta Sans', sans-serif", weight: '600' },
+                        padding: 20
                     }
+                },
+                tooltip: {
+                    backgroundColor: isDark ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+                    titleColor: isDark ? '#fff' : '#0f172a',
+                    bodyColor: isDark ? '#cbd5e1' : '#475569',
+                    borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: true
                 }
             }
         }
     });
 
+    // --- MODALS ---
+    
     // Create Project Modal
-    document.getElementById('createBtn').addEventListener('click', function() {
-        showModal(`
-            <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-4">Create New Project</h3>
-            <form id="projectForm">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Project Name</label>
-                        <input type="text" name="name" required 
-                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Description</label>
-                        <textarea name="description" rows="3"
-                                  class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500"></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Access Code</label>
-                        <input type="text" name="access_code" required placeholder="e.g. TEAM2024"
-                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
-                        <p class="text-slate-500 dark:text-slate-400 text-xs mt-1">Share this code with your team to let them join</p>
-                    </div>
-                    <div>
-                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Deadline (Optional)</label>
-                        <input type="date" name="deadline"
-                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
-                    </div>
-                    <div class="flex space-x-3 pt-4">
-                        <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors">
-                            Create Project
-                        </button>
-                        <button type="button" onclick="hideModal()" class="flex-1 bg-slate-500 dark:bg-slate-600 hover:bg-slate-600 dark:hover:bg-slate-700 text-white py-2 rounded-lg transition-colors">
-                            Cancel
-                        </button>
-                    </div>
+    const createBtn = document.getElementById('createBtn');
+    if (createBtn) {
+        createBtn.addEventListener('click', function() {
+            showModal(`
+                <div class="text-left">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-brand-100 dark:bg-brand-900/30 text-brand-600 flex items-center justify-center">
+                            <i class="fa-solid fa-folder-plus"></i>
+                        </div>
+                        Nouveau Projet
+                    </h3>
+                    <form id="projectForm" class="space-y-5">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Nom du Projet</label>
+                            <input type="text" name="name" required 
+                                   class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all"
+                                   placeholder="Ex: Refonte Site Web">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description</label>
+                            <textarea name="description" rows="3"
+                                      class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-transparent outline-none transition-all resize-none"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Code d'accès</label>
+                                <input type="text" name="access_code" required placeholder="Ex: TEAM24"
+                                       class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none transition-all font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Date limite</label>
+                                <input type="date" name="deadline"
+                                       class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none transition-all">
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-3 pt-4">
+                            <button type="button" onclick="hideModal()" class="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors">
+                                Annuler
+                            </button>
+                            <button type="submit" class="flex-1 px-4 py-3 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 shadow-lg shadow-brand-500/30 transition-all hover:-translate-y-0.5">
+                                Créer
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            </form>
-        `);
+            `);
 
-        document.getElementById('projectForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData);
-            
-            const result = await apiCall('/projects/create', {
-                method: 'POST',
-                body: JSON.stringify(data)
+            document.getElementById('projectForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData);
+                
+                const result = await apiCall('/projects/create', {
+                    method: 'POST',
+                    body: JSON.stringify(data)
+                });
+                
+                if (result.success) {
+                    hideModal();
+                    location.reload();
+                } else {
+                    showToast(result.error || 'Erreur lors de la création', 'error');
+                }
             });
-            
-            if (result.success) {
-                hideModal();
-                location.reload();
-            }
         });
-    });
+    }
 
-    // Project Join Modal
+    // Join Project Modal
     function openJoinModal(projectId, projectName) {
         showModal(`
-            <h3 class="text-xl font-semibold text-slate-900 dark:text-white mb-4">Join Project</h3>
-            <p class="text-slate-600 dark:text-slate-400 mb-4">"${projectName}" is private. Please enter the access code to join.</p>
-            <form id="projectJoinForm">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-slate-700 dark:text-slate-300 text-sm font-medium mb-2">Access Code</label>
-                        <input type="password" name="access_code" required placeholder="Enter access code"
-                               class="w-full px-3 py-2 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:border-indigo-500">
-                        <div id="joinError" class="text-rose-600 text-sm mt-1 hidden"></div>
+            <div class="text-left">
+                <div class="mb-6 text-center">
+                    <div class="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-3 text-amber-600">
+                        <i class="fa-solid fa-lock text-xl"></i>
                     </div>
-                    <div class="flex space-x-3 pt-4">
-                        <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg transition-colors">
-                            <i class="fa-solid fa-unlock mr-2"></i>Unlock & Join
-                        </button>
-                        <button type="button" onclick="hideModal()" class="flex-1 bg-slate-500 dark:bg-slate-600 hover:bg-slate-600 dark:hover:bg-slate-700 text-white py-2 rounded-lg transition-colors">
-                            Cancel
-                        </button>
-                    </div>
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white">Projet Privé</h3>
+                    <p class="text-sm text-slate-500 mt-1">Entrez le code pour rejoindre <strong>"${projectName}"</strong></p>
                 </div>
-            </form>
+                
+                <form id="projectJoinForm" class="space-y-5">
+                    <div>
+                        <input type="password" name="access_code" required placeholder="Entrez le code d'accès..."
+                               class="w-full px-4 py-3 text-center text-lg tracking-widest bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all">
+                        <div id="joinError" class="text-rose-500 text-xs text-center mt-2 font-bold hidden"></div>
+                    </div>
+                    
+                    <div class="flex gap-3 pt-2">
+                        <button type="button" onclick="hideModal()" class="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 transition-colors">
+                            Annuler
+                        </button>
+                        <button type="submit" class="flex-1 px-4 py-3 bg-amber-600 text-white font-bold rounded-xl hover:bg-amber-700 shadow-lg shadow-amber-500/30 transition-all hover:-translate-y-0.5">
+                            Déverrouiller
+                        </button>
+                    </div>
+                </form>
+            </div>
         `);
 
         document.getElementById('projectJoinForm').addEventListener('submit', async function(e) {
@@ -233,6 +301,7 @@
             const errorDiv = document.getElementById('joinError');
             
             try {
+                // Note: Ensure this route exists in your backend
                 const result = await apiCall(`/projects/${projectId}/join`, {
                     method: 'POST',
                     body: JSON.stringify(data)
@@ -240,13 +309,18 @@
                 
                 if (result.success) {
                     hideModal();
-                    window.location.href = `/projects/${projectId}/board`;
+                    showToast('Projet rejoint avec succès !', 'success');
+                    setTimeout(() => window.location.href = `/projects/${projectId}/board`, 500);
                 } else {
-                    errorDiv.textContent = result.message || 'Failed to join project';
+                    errorDiv.textContent = result.message || 'Code incorrect';
                     errorDiv.classList.remove('hidden');
+                    // Shake animation for feedback
+                    const input = this.querySelector('input');
+                    input.classList.add('border-rose-500', 'animate-pulse');
+                    setTimeout(() => input.classList.remove('border-rose-500', 'animate-pulse'), 500);
                 }
             } catch (error) {
-                errorDiv.textContent = 'Error joining project';
+                errorDiv.textContent = 'Erreur de connexion';
                 errorDiv.classList.remove('hidden');
             }
         });

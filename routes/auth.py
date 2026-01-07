@@ -78,10 +78,54 @@ def logout():
 @auth_bp.route('/profile')
 @login_required
 def profile():
-    """User profile page"""
+    """User profile page with dynamic stats"""
     user = session.get('user')
-    user_profile = FirestoreService.get_user_profile(user['uid'])
-    return render_template('auth/profile.html', user=user, profile=user_profile)
+    user_id = user.get('uid')
+    user_profile = FirestoreService.get_user_profile(user_id)
+    
+    # --- DYNAMIC STATS CALCULATION ---
+    try:
+        # 1. Get all projects
+        all_projects = FirestoreService.get_projects()
+        
+        # 2. Filter projects where user is Owner OR Member
+        my_projects = []
+        tasks_count = 0
+        
+        for p in all_projects:
+            # Check membership
+            if p.get('created_by') == user_id or user_id in p.get('members', []):
+                my_projects.append(p)
+                
+                # 3. Count tasks assigned to this user in this project
+                # (Only fetch tasks if user is part of the project)
+                project_tasks = FirestoreService.get_tasks(p['id'])
+                
+                # Check match against username OR email (covers both assignment types)
+                user_identifiers = [
+                    user_profile.get('username'), 
+                    user.get('email'),
+                    user_profile.get('full_name')
+                ]
+                
+                # Count tasks where assignee matches any of the user's identifiers
+                user_tasks = [
+                    t for t in project_tasks 
+                    if t.get('assignee') and t.get('assignee') in user_identifiers
+                ]
+                tasks_count += len(user_tasks)
+
+        projects_count = len(my_projects)
+        
+    except Exception as e:
+        print(f"Error calculating stats: {e}")
+        projects_count = 0
+        tasks_count = 0
+
+    return render_template('auth/profile.html', 
+                         user=user, 
+                         profile=user_profile, 
+                         stats={'projects': projects_count, 'tasks': tasks_count})
 
 @auth_bp.route('/update_profile', methods=['POST'])
 @login_required
@@ -124,9 +168,9 @@ def update_profile():
         # Update session
         session['user']['full_name'] = full_name
         
-        flash('Profile updated successfully!', 'success')
+        flash('Profil mis à jour avec succès !', 'success')
         return redirect(url_for('auth.profile'))
         
     except Exception as e:
-        flash(f'Error updating profile: {str(e)}', 'error')
+        flash(f'Erreur lors de la mise à jour: {str(e)}', 'error')
         return redirect(url_for('auth.profile'))
